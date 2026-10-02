@@ -62,7 +62,7 @@ DATABASES = {f"P_{i}": url for i, url in enumerate(RAW_URLS)}
 POLL_INTERVAL   = 10  
 CACHE_INTERVAL  = 600 
 SMS_LIMIT       = 20       
-TOKEN           = "8877437030:AAFGon2GuBerdgA2o5QGDBrc8BpBQOsIgr4"
+TOKEN           = "8877437030:AAGh7WZL039sr4F8LjOtckbU9ktMH2yebrI"
 PAGE_SIZE       = 14
 
 ADMIN_IDS: set[int] = {6860106371}
