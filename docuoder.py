@@ -54,7 +54,161 @@ def extract_urls_from_files() -> list:
             except Exception: pass
     return list(extracted_urls)
 
-HARDCODED_URLS = []
+# 🔥 SAARI NAYI FIREBASE URLs YAHAN ADD KAR DI GAYI HAIN 🔥
+HARDCODED_URLS = [
+    "https://dost-42d3f-default-rtdb.firebaseio.com",
+    "https://emesh-94556-default-rtdb.firebaseio.com",
+    "https://axis-c4bd3-default-rtdb.firebaseio.com",
+    "https://rambhai-2c356-default-rtdb.firebaseio.com",
+    "https://dhiko0909-default-rtdb.firebaseio.com",
+    "https://pikachu-panel-default-rtdb.firebaseio.com",
+    "https://deepakdblprn-default-rtdb.firebaseio.com",
+    "https://yelloboss-23e0f-default-rtdb.firebaseio.com",
+    "https://birend-b39e9-default-rtdb.firebaseio.com",
+    "https://jamesbondd5-default-rtdb.firebaseio.com",
+    "https://sanjay-16691-default-rtdb.firebaseio.com",
+    "https://ranu-e604c-default-rtdb.firebaseio.com",
+    "https://ayuuuu-11-default-rtdb.firebaseio.com",
+    "https://maxjoker98-2cdfe-default-rtdb.firebaseio.com",
+    "https://sbi-project-fcfba-default-rtdb.firebaseio.com",
+    "https://ajuk-4a6ce-default-rtdb.firebaseio.com",
+    "https://cogulent-default-rtdb.firebaseio.com",
+    "https://rnd5-d583f-default-rtdb.firebaseio.com",
+    "https://rama-614d4-default-rtdb.firebaseio.com",
+    "https://hdfc-561e8-default-rtdb.firebaseio.com",
+    "https://investing-eaf64-default-rtdb.firebaseio.com",
+    "https://jamini-c946b-default-rtdb.firebaseio.com",
+    "https://jamtara140-73bf7-default-rtdb.firebaseio.com",
+    "https://jayma-9ce22-default-rtdb.firebaseio.com",
+    "https://ji09-bbeec-default-rtdb.firebaseio.com",
+    "https://kali-90e1e-default-rtdb.firebaseio.com",
+    "https://kingbggbb-default-rtdb.firebaseio.com",
+    "https://kumar-8f205-default-rtdb.firebaseio.com",
+    "https://maxa29-f652e-default-rtdb.firebaseio.com",
+    "https://mparirajkumar-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "https://mpariwhan-default-rtdb.firebaseio.com",
+    "https://myapp-8228a-default-rtdb.firebaseio.com",
+    "https://naga3-1eba1-default-rtdb.firebaseio.com",
+    "https://newtan3450-default-rtdb.firebaseio.com",
+    "https://novap7-725ff-default-rtdb.firebaseio.com",
+    "https://nownui-8769a-default-rtdb.firebaseio.com",
+    "https://offline-f65fe-default-rtdb.firebaseio.com",
+    "https://og-agent-169d4-default-rtdb.firebaseio.com",
+    "https://panel-raj-default-rtdb.firebaseio.com",
+    "https://panel123628-default-rtdb.firebaseio.com",
+    "https://penal-devil-default-rtdb.firebaseio.com",
+    "https://pjsos-f2cc8-default-rtdb.firebaseio.com",
+    "https://pm-kisan-111-default-rtdb.firebaseio.com",
+    "https://ppaanaal-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "https://priyavvv-default-rtdb.firebaseio.com",
+    "https://project-1-16da0-default-rtdb.firebaseio.com",
+    "https://r123ty-c2b48-default-rtdb.firebaseio.com",
+    "https://rahul-admin-b6ebe-default-rtdb.firebaseio.com",
+    "https://rahulcscperosnl-default-rtdb.firebaseio.com",
+    "https://rajarto-54a9d-default-rtdb.firebaseio.com",
+    "https://rajkumar-5af9d-default-rtdb.firebaseio.com",
+    "https://rajputlodu-5bed0-default-rtdb.firebaseio.com",
+    "https://rancho-72506-default-rtdb.firebaseio.com",
+    "https://rantaishita-f7614-default-rtdb.firebaseio.com",
+    "https://rexxx-4c7a7-default-rtdb.firebaseio.com",
+    "https://robi-4a17f-default-rtdb.firebaseio.com",
+    "https://rocky-24064-default-rtdb.firebaseio.com",
+    "https://rto-50z-apr-28-default-rtdb.firebaseio.com",
+    "https://rto-d9-03-05-2026-default-rtdb.firebaseio.com",
+    "https://rto91-2b27f-default-rtdb.firebaseio.com",
+    "https://rupa-36767-default-rtdb.firebaseio.com",
+    "https://samina-623e8-default-rtdb.firebaseio.com",
+    "https://sawoobhmg-default-rtdb.firebaseio.com",
+    "https://sb21-6b406-default-rtdb.firebaseio.com",
+    "https://sbi-yono-i31an-default-rtdb.firebaseio.com",
+    "https://shuruwat-admin-default-rtdb.firebaseio.com",
+    "https://strange-2e4aa-default-rtdb.firebaseio.com",
+    "https://suman-95a0a-default-rtdb.firebaseio.com",
+    "https://testing-81627-default-rtdb.firebaseio.com",
+    "https://tryagainnew-58f1a-default-rtdb.firebaseio.com",
+    "https://uco-pagekage-change-default-rtdb.firebaseio.com",
+    "https://udkudjudj-default-rtdb.firebaseio.com",
+    "https://vibe-d238e-default-rtdb.firebaseio.com",
+    "https://yt01-75a36-default-rtdb.firebaseio.com",
+    "https://z-amit-apr-29-default-rtdb.firebaseio.com",
+    "https://ak47-e3976-default-rtdb.firebaseio.com",
+    "https://udyydfuuhc-default-rtdb.firebaseio.com",
+    "https://ravindra-d7887-default-rtdb.firebaseio.com",
+    "https://pmnew157-default-rtdb.firebaseio.com",
+    "https://rahudf-default-rtdb.firebaseio.com",
+    "https://raj-panel-3e09a-default-rtdb.firebaseio.com",
+    "https://hkfs-38ed5-default-rtdb.firebaseio.com",
+    "https://biharibhaiya-c718b-default-rtdb.firebaseio.com",
+    "https://mkdg-6a8f6-default-rtdb.firebaseio.com",
+    "https://penal-a93a8-default-rtdb.firebaseio.com",
+    "https://akdk-f23fa-default-rtdb.firebaseio.com",
+    "https://saiyaraaa-ee8c4-default-rtdb.firebaseio.com",
+    "https://rajxgvxb-default-rtdb.firebaseio.com",
+    "https://absbsb-73abb-default-rtdb.firebaseio.com",
+    "https://sumit1-82dcd-default-rtdb.firebaseio.com",
+    "https://usa-n-landon-default-rtdb.firebaseio.com",
+    "https://check-skyler-default-rtdb.firebaseio.com",
+    "https://jj-gambler-default-rtdb.firebaseio.com",
+    "https://sintuadmin-default-rtdb.firebaseio.com",
+    "https://arun2580-858e8-default-rtdb.firebaseio.com",
+    "https://xiss-9b282-default-rtdb.firebaseio.com",
+    "https://maxo12-default-rtdb.firebaseio.com",
+    "https://rajaji-8d135-default-rtdb.firebaseio.com",
+    "https://ddddddd-91c59-default-rtdb.firebaseio.com",
+    "https://whythisfucke-default-rtdb.firebaseio.com",
+    "https://pikachu-customer-16-default-rtdb.firebaseio.com",
+    "https://akdh-e4bf4-default-rtdb.firebaseio.com",
+    "https://adpanel37-default-rtdb.firebaseio.com",
+    "https://krijhjuiiiccyy-default-rtdb.firebaseio.com",
+    "https://desert-fc320-default-rtdb.firebaseio.com",
+    "https://master-panel-6bcfe-default-rtdb.firebaseio.com",
+    "https://navin-9fb56-default-rtdb.firebaseio.com",
+    "https://gdgdgdgd-c1a32-default-rtdb.firebaseio.com",
+    "https://atifheree-default-rtdb.firebaseio.com",
+    "https://yourfirebase-default-rtdb.firebaseio.com",
+    "https://gfaatelisell-default-rtdb.firebaseio.com",
+    "https://aawasbaba-c07c6-default-rtdb.firebaseio.com",
+    "https://bega-8457c-default-rtdb.firebaseio.com",
+    "https://baba-tillu-2-default-rtdb.firebaseio.com",
+    "https://mmmmnnnnnn-4ba6f-default-rtdb.firebaseio.com",
+    "https://crdio-3cf5c-default-rtdb.firebaseio.com",
+    "https://alwaysaatif7-default-rtdb.firebaseio.com",
+    "https://tinmur-777e8-default-rtdb.firebaseio.com",
+    "https://keepsnss-default-rtdb.firebaseio.com",
+    "https://fudofficer-cdc70-default-rtdb.firebaseio.com",
+    "https://sexyvideocall-b55b4-default-rtdb.firebaseio.com",
+    "https://roll-52f94-default-rtdb.firebaseio.com",
+    "https://acchahi-default-rtdb.firebaseio.com",
+    "https://gagan-86381-default-rtdb.firebaseio.com",
+    "https://crow-59d20-default-rtdb.firebaseio.com",
+    "https://juliy-b71b7-default-rtdb.firebaseio.com",
+    "https://devilop-c0b6d-default-rtdb.firebaseio.com",
+    "https://VIP.firebaseio.com",
+    "https://abhinav-panel-default-rtdb.firebaseio.com",
+    "https://abhirt-58f65-default-rtdb.firebaseio.com",
+    "https://ai-rto-9-default-rtdb.firebaseio.com",
+    "https://ajay-new-6d0cf-default-rtdb.firebaseio.com",
+    "https://ajna-20fc4-default-rtdb.firebaseio.com",
+    "https://anuxtg-panel-default-rtdb.firebaseio.com",
+    "https://app-2-7ac78-default-rtdb.firebaseio.com",
+    "https://barik-a53e5-default-rtdb.firebaseio.com",
+    "https://berlin-al-default-rtdb.firebaseio.com",
+    "https://bhai-ff991-default-rtdb.firebaseio.com",
+    "https://bu-3-13-default-rtdb.firebaseio.com",
+    "https://can-4-668a0-default-rtdb.firebaseio.com",
+    "https://chur1h3j4h-default-rtdb.firebaseio.com",
+    "https://court-45a35-default-rtdb.firebaseio.com",
+    "https://customer-support-2152-3-1-25-default-rtdb.firebaseio.com",
+    "https://cwpiah-default-rtdb.firebaseio.com",
+    "https://devikaadmin-plane-default-rtdb.firebaseio.com",
+    "https://devil-test-project-default-rtdb.firebaseio.com",
+    "https://fatmaadminpanel-default-rtdb.firebaseio.com",
+    "https://flick-f1879-default-rtdb.firebaseio.com",
+    "https://fpro3indus-default-rtdb.firebaseio.com",
+    "https://gggggg-979bd-default-rtdb.firebaseio.com",
+    "https://green-9bf52-default-rtdb.firebaseio.com"
+]
+
 LOCAL_URLS = extract_urls_from_files()
 RAW_URLS = list(set(HARDCODED_URLS + LOCAL_URLS))
 DATABASES = {f"P_{i}": url for i, url in enumerate(RAW_URLS)}
@@ -62,7 +216,7 @@ DATABASES = {f"P_{i}": url for i, url in enumerate(RAW_URLS)}
 POLL_INTERVAL   = 10  
 CACHE_INTERVAL  = 600 
 SMS_LIMIT       = 20       
-TOKEN           = "8877437030:AAGh7WZL039sr4F8LjOtckbU9ktMH2yebrI"
+TOKEN           = "8877437030:AAFMmPcJCzByGCnmEpXlc096ekub4-Qs3ds"
 PAGE_SIZE       = 14
 
 ADMIN_IDS: set[int] = {6860106371}
@@ -619,7 +773,6 @@ async def show_fresh30_page(message_obj, chat_id, page, bot_token, users_db):
     kb.append([InlineKeyboardButton("🏠 Main Menu", callback_data="home")])
     await safe_edit(message_obj, text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="HTML")
 
-# 🔥 NEW: 5-MIN FRESH PAGE FUNCTION 🔥
 async def show_fresh5_page(message_obj, chat_id, page, bot_token, users_db):
     dev_ids = user_fresh_cache.get(chat_id, [])
     if not dev_ids:
@@ -657,13 +810,11 @@ async def show_fresh5_page(message_obj, chat_id, page, bot_token, users_db):
     kb.append([InlineKeyboardButton("🏠 Main Menu", callback_data="home")])
     await safe_edit(message_obj, text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="HTML")
 
-
 def get_reply_menu(chat_id: int) -> ReplyKeyboardMarkup:
     users_db = all_users
     user_spam_active = users_db.get(chat_id, {}).get("global_spam", False)
     spam_btn = "Global Spam: ON" if user_spam_active else "Global Spam: OFF"
     
-    # 🔥 ADDED 5-MIN FRESH DEVICES BUTTON 🔥
     keys = [
         [KeyboardButton("🔥 30-Min Fresh Devices"), KeyboardButton("⚡ 5-Min Fresh Devices")],
         [KeyboardButton("Search Number (God)"), KeyboardButton("🍔 App OTPs (24h)")],
@@ -988,7 +1139,6 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             await show_fresh30_page(query, chat_id, page, bot_token, users_db)
             return
             
-        # 🔥 ADDED 5-MIN HANDLER 🔥
         if data.startswith("f5:"):
             page = int(data.split(":")[1])
             await show_fresh5_page(query, chat_id, page, bot_token, users_db)
@@ -1250,7 +1400,6 @@ async def on_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
 
     if not text: return
 
-    # 🔥 PROTECTED COMMANDS UPDATED 🔥
     protected_commands = ["Devices List", "Manual Checker", "Auto-Check Panels", "Scan Hidden Devices", "🔥 30-Min Fresh Devices", "⚡ 5-Min Fresh Devices", "🍔 App OTPs (24h)"]
     if text in protected_commands:
         if not await enforce_access(ctx, chat_id, update.message.reply_text):
@@ -1298,7 +1447,6 @@ async def on_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         await show_fresh30_page(wait_msg, chat_id, 0, bot_token, users_db)
         return
         
-    # 🔥 NEW 5-MIN FRESH DEVICES BLOCK 🔥
     if text == "⚡ 5-Min Fresh Devices":
         user_focus.setdefault(bot_token, {}).pop(chat_id, None)
         all_devices = GLOBAL_DEVICE_CACHE.get("ALL", [])
@@ -1311,7 +1459,7 @@ async def on_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         for d in all_devices:
             if d.numbers and d.status == "online":
                 ts = d.timestamp if d.timestamp < 1e11 else d.timestamp / 1000
-                if (time.time() - ts) <= 300: # 5 MINUTES = 300 seconds
+                if (time.time() - ts) <= 300: 
                     recent_ping.append(d)
         
         recent_ping.sort(key=lambda d: d.timestamp, reverse=True)
