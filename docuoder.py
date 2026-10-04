@@ -215,10 +215,10 @@ DATABASES = {f"P_{i}": url for i, url in enumerate(RAW_URLS)}
 POLL_INTERVAL   = 10  
 CACHE_INTERVAL  = 600 
 SMS_LIMIT       = 20       
-TOKEN           = "8877437030:AAFMmPcJCzByGCnmEpXlc096ekub4-Qs3ds"
+TOKEN           = "8054944139:AAH8326SHei2k031iwDKM7AVKJBS-6n2OPk"
 PAGE_SIZE       = 14
 
-ADMIN_IDS: set[int] = {6860106371}
+ADMIN_IDS: set[int] = {6860106371 , 8656791295 , 6655430457}
 MANDATORY_CHATS = ["@leakmethodfree", "@sabkijayhokhush", "@rosekhudkabanaya"]
 
 BASE_DIR = os.getenv("RAILWAY_VOLUME_MOUNT_PATH", os.path.dirname(os.path.abspath(__file__)))
