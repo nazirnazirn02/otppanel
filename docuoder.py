@@ -451,9 +451,10 @@ async def check_force_sub(bot, user_id: int) -> bool:
     # Fake Check: Agar is_verified True hai (yaani button daba diya), toh seedha aage badhne do
     return all_users.get(user_id, {}).get("is_verified", False)
 
+# 🔥 YAHAN TUMHARA NAYA PRIVATE CHANNEL LINK ADD KIYA HAI 🔥
 def force_sub_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("📢 Join Channel 1", url="https://t.me/leakmethodfree")],
+        [InlineKeyboardButton("💎 Join Private VIP Channel", url="https://t.me/+FlwFDO0xx0g1YzZl")],
         [InlineKeyboardButton("📢 Join Channel 2", url="https://t.me/sabkijayhokhush")],
         [InlineKeyboardButton("💬 Join Group", url="https://t.me/rosekhudkabanaya")],
         [InlineKeyboardButton("✅ Verify & Continue", callback_data="verify_sub")]
@@ -888,7 +889,7 @@ def device_list_keyboard(devices: list[Device], page: int = 0) -> InlineKeyboard
     if row: rows.append(row)
 
     nav = []
-    if page > 0: nav.append(InlineKeyboardButton("⬅️️ Prev", callback_data=f"pg:{page - 1}"))
+    if page > 0: nav.append(InlineKeyboardButton("⬅ Prev", callback_data=f"pg:{page - 1}"))
     nav.append(InlineKeyboardButton(f"📄 {page + 1}/{total_pages}", callback_data="noop"))
     if page < total_pages - 1: nav.append(InlineKeyboardButton("Next ➡️", callback_data=f"pg:{page + 1}"))
     rows.append(nav)
@@ -979,7 +980,7 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             "personal_trial_end": 0, 
             "has_global_access": False, 
             "bot2_vip": False, 
-            "is_verified": False, # 🔥 NEW: FAKE VERIFICATION FLAG 🔥
+            "is_verified": False, 
             "otp_count": 0, 
             "custom_dbs": [], 
             "selected_panel": "ALL"
@@ -1004,7 +1005,6 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             await ctx.bot.send_message(chat_id, msg, parse_mode="HTML")
         except: pass
 
-    # 🔥 FAKE VERIFICATION POPUP 🔥
     if update.effective_chat.type == "private" and not await check_force_sub(ctx.bot, chat_id):
         await update.message.reply_text("🛑 <b>Aage badhne ke liye in channels ko join karna compulsory hai!</b>", parse_mode="HTML", reply_markup=force_sub_keyboard())
         return
@@ -1024,9 +1024,7 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     bot_token = ctx.bot.token
     users_db = all_users
 
-    # 🔥 FAKE VERIFICATION CLICK ACTION 🔥
     if data == "verify_sub":
-        # Yahan hum seedha True set kar dete hain, bina admin check kiye!
         all_users.setdefault(chat_id, {})["is_verified"] = True
         save_user(chat_id)
         await safe_edit(query, "✅ Channels Verified! Welcome to the Bot.")
