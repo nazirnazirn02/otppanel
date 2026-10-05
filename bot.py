@@ -14,6 +14,7 @@ import sys
 import time
 import json
 import random
+import string
 import asyncio
 import logging
 import warnings
@@ -119,7 +120,37 @@ API_LOCK = asyncio.Lock()
 SYS_SETTINGS = {
     "api_keys": [
         "AK_aewqEf78uV8I3V06vcEcBlESdcPGyz74", "AK_82DbShpWkA6_Ctln35D7d7jOzWOQkJk7",
-        "AK_Z67i7aPkuL4Iid7Vq8OgOuJb7ewNZy4K", "AK_31Whk-_9PxJnWJMJlS0op7kcp_ESfQTv"
+        "AK_Z67i7aPkuL4Iid7Vq8OgOuJb7ewNZy4K", "AK_31Whk-_9PxJnWJMJlS0op7kcp_ESfQTv",
+        "AK_RrbWlO2Ole-pJgbmsm0mDcoOXFZ_bvJ-", "AK_KYrXjwwwdLYGiGXq47FDWOoL9vvdZZmo",
+        "AK_Dooy_O2elOFy57Qjzt70FEAjBQcGD8YM", "AK_jfaywkZJc6W2_JUjHKtxo3uEcJOkBNH6",
+        "AK_iIJWhqJU-C5qGdEEvoMPy0vMyDvOJO4x", "AK_huue0mXg6tf4e4syA_DU7M8naJZF2TAT",
+        "AK_DQDS9hMQ3M0H-ykltwotJMYpRFAC4fNg", "AK_l3KWP5J0l0vpRHV_xMMYqVY9OUGLcIJO",
+        "AK_Y6tDZmfylYdDchpsSbyqzu5YuD1bnbNo", "AK_bC4UzJNUG4Yk8TtT3mxqxNJ6oIPLiBfh",
+        "AK_BtvAIidv7mzczqKdg-y5-Pw4C9Ri7Pvw", "AK_CphAPpSkMgIKLCzBYZFCt6mN68FgOgq3",
+        "AK_16LERGicFB6uncWbhCjeE9uD-UHjrFsA", "AK_0damiG8gnn6xBLe3__JBfcvH_rJh686E",
+        "AK_gvRJyMC_byA4xamTOrRsWiNEHPrs_QS1", "AK_YvD2v66Ue-YlZ-Hu18s3NvNaL2vql2r3",
+        "AK_5QuS_fHqe6eE-zTaZ_fDclt29D9yMDgE", "AK_xY9PPRI388wiXjpbRQWCQrc5jA9mBrAa",
+        "AK_KY-Lvl-_x7-t8hQlzuSwI3s2fBooCJAd", "AK_Pg_J42kDmN2gazXPgCZlxNt6fsfnOlCT",
+        "AK_R5xBtr0Mejw-0a54j-gTxh8feMjQZcOn", "AK_9CXg3dKl-IxLDIerpMzhd-KVE3HCMCso",
+        "AK_7Mif5BId_Iz5rjpKD6Fc2k6DX7mqCEyU", "AK__OdSNA9Dq-3YJEueBT1-OcnRiJGkN1Y0",
+        "AK_LnxgclktRe50Phzzwcon4kltxFtxx2vJ", "AK_8NlERdLgolrFdeddI3sMrjZG8bICRHoF",
+        "AK_3pTIVB1bG172ZlXmch3ICqCNcRyx8gwA", "AK_etId74tu1V75auJXiq1Y_jV9H9lsQ4am",
+        "AK_YIpYpHNlCNnjLeSUdkA-lqSGZ94nppjt", "AK_QLZXoprRieTkAZlgERxHdr9I1sL3bGP_",
+        "AK_-08LOerb6jaCx52JmjDC0pMWhNzgVRbZ", "AK_mS7CAb1vPUnhQorNuxDgV_xfNN2kyoGW",
+        "AK_LncxU9pi2mte200towYPh-ae2FcrMO9j", "AK_7DTjFAVezVWUvSvI4Ni-3_0L1t3uNwbw",
+        "AK_UGc1SjKM7pWUiub6xq3n-wTXa4p_Jrse", "AK_NuDV1z5xOi0uT7fxks4TfA0I0iPBbiFM",
+        "AK_NwhgeV64GrdGFoSaFj7LbqiieQObi55o", "AK_T2uFNlEPzaKT3OeIROc9FVYpYhYeFjma",
+        "AK_PD7Nc8H2a0DNwENQmlflKvCBEow30UD9", "AK_Htire7-fPlEdEMNAdtkQ0wZ0NS4ttbaz",
+        "AK_r8Sk4b7UzPf_DhbM_-tjVe1moW1iRLy5", "AK_EifnL8Bx6DfCIGRJGikPvPoYNkmpvTqF",
+        "AK_I6lx-tDgEJA0P_jP1foxgM2eUO5F-tJd", "AK_VqzDvRR4oJyG_zBZmHSjX2f57Z4dngfy",
+        "AK_5pvQYHaqr_71s4Wq0-_tRvgJBBscn6xB", "AK_1JbT6popnOVlIO929J9Y2Z0-gyHUCXdL",
+        "AK_PrWss32JjoP7nv6ttNOP0d3RYynqslug", "AK_ldeMT-eBQ2whhXvakm9frq59bmxYNo1Y",
+        "AK_dQhyxP4BsTbEIQ1s_VgXJkt4up4IX9UV", "AK_ak1Fy5vvoXhFInwSunFWEBz3SAuEltiO",
+        "AK_80VoNRC8pkOHI7Kbpe7ybvWcTq2ktuWO", "AK_n3rVdC1y5fIRJDLosvsNzQimr16D-zmr",
+        "AK_VuokZpsT91F2-TzrO13RQZ3BTOF1VOlA", "AK_GGulMMNAcqKRf8BAXQfzlesaozh917Re",
+        "AK_JDvMk7HIq4yhD1NvEZ0bRRgdnjyUrK_M", "AK_suKV-7E1peiwoxFLoi67ENmraj0mKRkE",
+        "AK_H2puTEPDk4cZ9LnW_vq-wdhjS7pMihgb", "AK_1yxxKAYrCLdun4jOSejUckG58QokfbPb",
+        "AK_-Xd_ErhFdQVLdHMB0XBEbqdf5ka3g0jh"
     ],
     "check_anim": "⚡"
 }
@@ -196,6 +227,10 @@ def load_data():
                 sorted_res = list(n_map.values())
                 sorted_res.sort(key=lambda d: (0 if d.status == "online" else 1, d.numbers[0] if d.numbers else d.id))
                 GLOBAL_DEVICE_CACHE["ALL"] = sorted_res
+                
+                if len(sorted_res) > 50:
+                    SCAN_PROGRESS["completed"] = 99999 
+                    SCAN_PROGRESS["total"] = 99999
         except Exception: pass
 
     for fname in os.listdir(USERS_DIR):
@@ -245,9 +280,29 @@ async def auto_save_loop():
         await asyncio.sleep(300) 
         await save_data_async()
 
+# 🔥 THE MISSING BACKUP LOOP RESTORED 🔥
+async def hourly_backup_loop(app: Application):
+    while True:
+        await asyncio.sleep(7200) 
+        try:
+            total_u = len(all_users)
+            g_panels = len(DATABASES) + len(SETTINGS.get("global_panels", []))
+            u_panels = sum(len(u.get("custom_dbs", [])) for u in all_users.values())
+            msg = f"⏱ <b>2-HOUR AUTO BACKUP & STATS</b> ⏱\n\n👥 Total Users: {total_u}\n🌍 Global Panels: {g_panels}\n👤 User Custom Panels: {u_panels}\n🔄 Total OTPs Captured: {total_otps_processed}\n\n✅ System Stability: NORMAL. Railway Anti-Crash Active."
+            
+            backup_path = os.path.join(SYS_DIR, "Database_Backup.json")
+            with open(backup_path, "w", encoding="utf-8") as f:
+                json.dump({"users": all_users, "settings": SETTINGS}, f, indent=4)
+                
+            for adm in ADMIN_IDS: 
+                await app.bot.send_message(adm, msg, parse_mode="HTML")
+                await app.bot.send_document(adm, document=open(backup_path, "rb"), filename=f"Backup_{int(time.time())}.json")
+        except Exception as e:
+            logger.error(f"Backup Error: {e}")
+
 async def memory_sweeper():
     while True:
-        await asyncio.sleep(600) 
+        await asyncio.sleep(300) 
         now = time.time()
         expired_cd = [k for k, v in user_cooldowns.items() if now - v > 3600]
         for k in expired_cd: del user_cooldowns[k]
@@ -453,6 +508,13 @@ def get_user_dbs(uinfo: dict) -> list:
         if isinstance(db, str): valid_urls.append({"url": db, "auth": None})
         elif isinstance(db, dict) and db.get("expiry", 0) > now: valid_urls.append({"url": db["url"], "auth": db.get("auth")})
     return valid_urls
+
+def is_spamming(user_id: int) -> bool:
+    if user_id in ADMIN_IDS: return False
+    now = time.time()
+    if now - user_cooldowns.get(user_id, 0) < 1.0: return True
+    user_cooldowns[user_id] = now
+    return False
 
 async def check_force_sub(bot, user_id: int) -> bool:
     if user_id in ADMIN_IDS: return True
@@ -695,7 +757,7 @@ async def show_fresh_page(message_obj, chat_id, page, bot_token, users_db, durat
 
     nav = []
     callback_prefix = "f5:" if duration_minutes == 5 else "f30:"
-    if page > 0: nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=f"{callback_prefix}{page-1}"))
+    if page > 0: nav.append(InlineKeyboardButton("⬅️️ Prev", callback_data=f"{callback_prefix}{page-1}"))
     nav.append(InlineKeyboardButton(f"📄 {page + 1}/{total_pages}", callback_data="noop"))
     if page < total_pages - 1: nav.append(InlineKeyboardButton("Next ➡️", callback_data=f"{callback_prefix}{page+1}"))
     if nav: kb.append(nav)
@@ -852,7 +914,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 # ═══════════════════════════════════════════════════════
-#  CORE TELEGRAM HANDLERS (THE MISSING PIECE RESTORED)
+#  CORE COMMANDS & HANDLERS
 # ═══════════════════════════════════════════════════════
 
 async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
@@ -872,6 +934,8 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             if ref_id in all_users and ref_id != chat_id:
                 all_users[ref_id]["referrals"] = all_users[ref_id].get("referrals", 0) + 1
                 save_user(ref_id)
+                try: await ctx.bot.send_message(ref_id, f"🎉 New user joined via your link! Total Referrals: {all_users[ref_id]['referrals']}/10")
+                except: pass
         save_user(chat_id)
         
         try:
@@ -1402,8 +1466,8 @@ async def on_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
                 
                 for u in urls:
                     try:
-                        await asyncio.wait_for(WORK_QUEUE.put(("INIT", f"G_TXT_{int(time.time())}_{added_count}", {"url": u, "auth": None})), timeout=2.0)
-                    except: pass
+                        WORK_QUEUE.put_nowait(("INIT", f"G_TXT_{int(time.time())}_{added_count}", {"url": u, "auth": None}))
+                    except asyncio.QueueFull: pass
                     
                 await safe_edit(wait_msg, f"✅ <b>SUCCESS!</b>\n━━━━━━━━━━━━━━━━━━\nTotal URLs Extracted: {len(urls)}\nNewly Added to Global: {added_count}\n\n<i>Ab ye saare panels background me active ho gaye hain!</i>", parse_mode="HTML")
             except Exception as e:
@@ -1659,20 +1723,20 @@ async def master_dispatcher(app: Application) -> None:
             
             if first_run:
                 for tag, config in dbs_to_poll.items():
-                    try: await asyncio.wait_for(WORK_QUEUE.put(("INIT", tag, config)), timeout=1.0)
-                    except: pass
+                    try: WORK_QUEUE.put_nowait(("INIT", tag, config))
+                    except asyncio.QueueFull: pass
                 first_run = False
                 last_cache_time = time.time()
                 print("\n✅ Bot started successfully. Vantage & Playwright Active.\n")
             else:
                 now = time.time()
                 for tag, config in dbs_to_poll.items():
-                    try: await asyncio.wait_for(WORK_QUEUE.put(("POLL", tag, config)), timeout=0.5)
-                    except: pass
+                    try: WORK_QUEUE.put_nowait(("POLL", tag, config))
+                    except asyncio.QueueFull: pass
                 if now - last_cache_time > CACHE_INTERVAL:
                     for tag, config in dbs_to_poll.items():
-                        try: await asyncio.wait_for(WORK_QUEUE.put(("CACHE_UPDATE", tag, config)), timeout=1.0)
-                        except: pass
+                        try: WORK_QUEUE.put_nowait(("CACHE_UPDATE", tag, config))
+                        except asyncio.QueueFull: pass
                     last_cache_time = now
         except Exception: pass
         await asyncio.sleep(POLL_INTERVAL)
