@@ -1,1 +1,1 @@
-worker: python docuoder.py
+worker: python bot.py
