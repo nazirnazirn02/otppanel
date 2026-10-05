@@ -2,8 +2,9 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-# System dependencies install karna taaki Playwright aur Chromium chalein
+# System dependencies aur C/C++ compilers (gcc, g++) install karna
 RUN apt-get update && apt-get install -y \
+    build-essential \
     wget \
     curl \
     gnupg \
@@ -23,6 +24,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Playwright browsers install karna
