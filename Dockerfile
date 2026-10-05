@@ -1,8 +1,8 @@
-FROM python:3.13-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# System dependencies aur C/C++ compilers (gcc, g++) install karna
+# System dependencies aur compilers install karna
 RUN apt-get update && apt-get install -y \
     build-essential \
     wget \
