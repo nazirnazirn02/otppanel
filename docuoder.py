@@ -117,7 +117,6 @@ HTTP_SEMAPHORE = asyncio.Semaphore(20)
 WORKER_SEMAPHORE = asyncio.Semaphore(20)
 API_LOCK = asyncio.Lock()
 
-# 🔥 FULL API KEYS LIST RESTORED 🔥
 SYS_SETTINGS = {
     "api_keys": [
         "AK_aewqEf78uV8I3V06vcEcBlESdcPGyz74", "AK_82DbShpWkA6_Ctln35D7d7jOzWOQkJk7",
@@ -177,14 +176,17 @@ async def handle_ping(request):
     return web.Response(text="Bot is running smoothly on Railway. Anti-Crash Active.")
 
 async def start_dummy_server():
-    app = web.Application()
-    app.router.add_get('/', handle_ping)
-    runner = web.AppRunner(app)
-    await runner.setup()
-    port = int(os.environ.get("PORT", 8080))
-    site = web.TCPSite(runner, '0.0.0.0', port)
-    await site.start()
-    logger.info(f"Railway Dummy Web Server started on port {port}")
+    try:
+        app = web.Application()
+        app.router.add_get('/', handle_ping)
+        runner = web.AppRunner(app)
+        await runner.setup()
+        port = int(os.environ.get("PORT", 8080))
+        site = web.TCPSite(runner, '0.0.0.0', port)
+        await site.start()
+        logger.info(f"Railway Dummy Web Server started on port {port}")
+    except Exception as e:
+        logger.error(f"Dummy Server Error (can be ignored if not on Railway): {e}")
 
 # ==========================================
 # 🛠 UTILITIES & CACHE
@@ -239,6 +241,16 @@ def load_data():
                 with open(os.path.join(USERS_DIR, fname), "r", encoding="utf-8") as f: all_users[uid] = json.load(f)
             except: pass
                 
+    for fname in os.listdir(CLONES_DIR):
+        if fname.endswith(".json"):
+            try:
+                with open(os.path.join(CLONES_DIR, fname), "r", encoding="utf-8") as f:
+                    cdata = json.load(f)
+                    cdata["users"] = {int(k): v for k, v in cdata.get("users", {}).items()}
+                    token = cdata.get("bot_token")
+                    if token: CLONES[token] = cdata
+            except: pass
+            
     for adm in ADMIN_IDS:
         if adm in all_users:
             all_users[adm]["global_spam"] = False 
@@ -305,7 +317,7 @@ async def hourly_backup_loop(app: Application):
 
 async def memory_sweeper():
     while True:
-        await asyncio.sleep(300) # Faster sweep for Railway limits
+        await asyncio.sleep(300) 
         now = time.time()
         expired_cd = [k for k, v in user_cooldowns.items() if now - v > 3600]
         for k in expired_cd: del user_cooldowns[k]
@@ -553,7 +565,11 @@ async def enforce_access(ctx: ContextTypes.DEFAULT_TYPE, chat_id: int, reply_fun
     if is_admin: return True
     
     now = time.time()
-    if now < u.get("access_until", 0) or now < u.get("global_trial_end", 0) or now < u.get("personal_trial_end", 0):
+    is_vip = now < u.get("access_until", 0)
+    is_global_trial = now < u.get("global_trial_end", 0)
+    is_personal_trial = now < u.get("personal_trial_end", 0)
+    
+    if is_vip or is_global_trial or is_personal_trial:
         return True
         
     refs = u.get("referrals", 0)
@@ -661,8 +677,11 @@ def get_reply_menu(chat_id: int) -> ReplyKeyboardMarkup:
         [KeyboardButton("Scan Hidden Devices"), KeyboardButton("🎁 Redeem Promo")]
     ]
     
-    if is_admin or is_vip: keys.append([KeyboardButton("💳 Add Panel")])
-    if chat_id in ADMIN_IDS: keys.append([KeyboardButton("Admin Panel"), KeyboardButton("Check Status")])
+    if is_admin or is_vip:
+        keys.append([KeyboardButton("💳 Add Panel")])
+        
+    if chat_id in ADMIN_IDS:
+        keys.append([KeyboardButton("Admin Panel"), KeyboardButton("Check Status")])
         
     return ReplyKeyboardMarkup(keys, resize_keyboard=True)
 
@@ -716,7 +735,8 @@ def device_list_keyboard(devices: list[Device], page: int = 0) -> InlineKeyboard
         if len(row) == 2:
             rows.append(row)
             row = []
-    if row: rows.append(row)
+    if row:
+        rows.append(row)
 
     nav = []
     if page > 0: nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=f"pg:{page - 1}"))
@@ -738,7 +758,8 @@ def online_only_keyboard(devices: list[Device]) -> InlineKeyboardMarkup:
             if len(row) == 2:
                 rows.append(row)
                 row = []
-        if row: rows.append(row)
+        if row:
+            rows.append(row)
     else: 
         rows.append([InlineKeyboardButton("📭 No devices online", callback_data="noop")])
         
@@ -1056,60 +1077,8 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 # ═══════════════════════════════════════════════════════
-#  RAILWAY WEB SERVER (ANTI-CRASH)
+#  CORE CALLBACK HANDLERS
 # ═══════════════════════════════════════════════════════
-async def handle_ping(request):
-    return web.Response(text="Bot is running smoothly on Railway. Anti-Crash Active.")
-
-async def start_dummy_server():
-    try:
-        app = web.Application()
-        app.router.add_get('/', handle_ping)
-        runner = web.AppRunner(app)
-        await runner.setup()
-        port = int(os.environ.get("PORT", 8080))
-        site = web.TCPSite(runner, '0.0.0.0', port)
-        await site.start()
-        logger.info(f"Railway Dummy Web Server started on port {port}")
-    except Exception as e:
-        logger.error(f"Dummy Server Error (can be ignored if not on Railway): {e}")
-
-# ═══════════════════════════════════════════════════════
-#  PANEL COMMANDS & CALLBACKS
-# ═══════════════════════════════════════════════════════
-
-async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    chat_id  = update.effective_chat.id
-    
-    if chat_id not in all_users:
-        all_users[chat_id] = {
-            "name": update.effective_user.first_name, 
-            "username": update.effective_user.username, 
-            "joined_at": datetime.now().strftime("%d %b %Y"), 
-            "referrals": 0, "access_until": 0, "global_trial_end": time.time() + 1800, "personal_trial_end": 0, 
-            "has_global_access": False, "otp_count": 0, "custom_dbs": [], "selected_panel": "ALL"
-        }
-        text = update.message.text.split()
-        if len(text) > 1 and text[1].isdigit():
-            ref_id = int(text[1])
-            if ref_id in all_users and ref_id != chat_id:
-                all_users[ref_id]["referrals"] = all_users[ref_id].get("referrals", 0) + 1
-                save_user(ref_id)
-                try: await ctx.bot.send_message(ref_id, f"🎉 New user joined via your link! Total Referrals: {all_users[ref_id]['referrals']}/10")
-                except: pass
-        save_user(chat_id)
-        
-        try:
-            msg = "🎉 <b>WELCOME BONUS!</b>\nAapko <b>30-Mins ka FREE Global VIP Access</b> mila hai! Aap sabhi admin panels aur numbers dekh sakte hain.\n\n<i>30 minute baad global numbers hide ho jayenge, uske baad '💳 Add Panel' karke apna Firebase daalne par aapko 1 Hour ka extra Personal Trial milega!</i>"
-            await ctx.bot.send_message(chat_id, msg, parse_mode="HTML")
-        except: pass
-
-    if update.effective_chat.type == "private" and not await check_force_sub(ctx.bot, chat_id):
-        await update.message.reply_text("🛑 <b>Aage badhne ke liye in channels ko join karna compulsory hai!</b>", parse_mode="HTML", reply_markup=force_sub_keyboard())
-        return
-
-    user_focus.setdefault(ctx.bot.token, {}).pop(chat_id, None)
-    await update.message.reply_text(f"🔥 VANTAGE PANEL + OMNIDIMENSION BOT 🔥\n━━━━━━━━━━━━━━━━━━\nWelcome {update.effective_user.first_name}!\n\n👉 Type: /call to launch AI Voice Agent\n👉 Or use the menu below for OTP & Bank Panel.", reply_markup=get_reply_menu(chat_id))
 
 async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     query   = update.callback_query
@@ -1150,7 +1119,7 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
 
         if data.startswith("auto_fb:"):
             service = data.split(":")[1]
-            await safe_edit(query, f"⏳ <b>AUTO-CHECKING LIVE NUMBERS</b>\n━━━━━━━━━━━━━━━━━━\nScanning all online devices for <b>{service.capitalize()}</b>...\n<i>Please wait, this might take a few seconds...</i>", parse_mode="HTML")
+            await safe_edit(query, f"⏳ <b>AUTO-CHECKING LIVE NUMBERS</b>\n━━━━━━━━━━━━━━━━━━\nScanning all online devices for <b>{service.capitalize()}</b>...\n<i>Please wait...</i>", parse_mode="HTML")
             
             all_devices = await get_all_devices(bot_token, chat_id, users_db)
             online_devs = [d for d in all_devices if d.status == "online" and d.numbers]
@@ -1400,8 +1369,7 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             return
 
     except Exception:
-        try: await query.answer("An error occurred.", show_alert=True)
-        except: pass
+        pass
 
 async def on_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
@@ -1901,25 +1869,6 @@ async def master_dispatcher(app: Application) -> None:
                     last_cache_time = now
         except Exception: pass
         await asyncio.sleep(POLL_INTERVAL)
-
-# ==========================================
-# 🚀 RAILWAY ANTI-CRASH WEB SERVER
-# ==========================================
-async def handle_ping(request):
-    return aiohttp.web.Response(text="Bot is running smoothly on Railway. Anti-Crash Active.")
-
-async def start_dummy_server():
-    try:
-        app = aiohttp.web.Application()
-        app.router.add_get('/', handle_ping)
-        runner = aiohttp.web.AppRunner(app)
-        await runner.setup()
-        port = int(os.environ.get("PORT", 8080))
-        site = aiohttp.web.TCPSite(runner, '0.0.0.0', port)
-        await site.start()
-        logger.info(f"Railway Dummy Web Server started on port {port}")
-    except Exception as e:
-        logger.error(f"Dummy Server Error (can be ignored if not on Railway): {e}")
 
 def main() -> None:
     if not TOKEN or TOKEN == "YOUR_TELEGRAM_BOT_TOKEN_HERE": 
