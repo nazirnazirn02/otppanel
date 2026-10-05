@@ -1,8 +1,8 @@
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
 WORKDIR /app
 
-# System dependencies aur compilers install karna
+# System dependencies aur C/C++ compilers install karna
 RUN apt-get update && apt-get install -y \
     build-essential \
     wget \
