@@ -3,3 +3,6 @@ aiohttp
 requests
 qrcode
 Pillow
+python-telegram-bot==20.8
+aiohttp==3.9.3
+playwright==1.42.0
