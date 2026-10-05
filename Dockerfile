@@ -2,7 +2,7 @@ FROM python:3.11-slim-bookworm
 
 WORKDIR /app
 
-# System dependencies aur C/C++ compilers install karna
+# System dependencies aur C/C++ compilers install karna (Playwright aur aiohttp ke liye zaroori)
 RUN apt-get update && apt-get install -y \
     build-essential \
     wget \
